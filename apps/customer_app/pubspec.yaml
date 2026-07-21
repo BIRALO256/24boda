@@ -1,0 +1,61 @@
+name: customer_app
+description: "24Boda Customer App — pickup and delivery for Uganda."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── Internal shared packages ──────────────────────────────────────────────
+  core_models:
+    path: ../../packages/core_models
+  firebase_services:
+    path: ../../packages/firebase_services
+  maps:
+    path: ../../packages/maps
+  notifications:
+    path: ../../packages/notifications
+  theme:
+    path: ../../packages/theme
+  utils:
+    path: ../../packages/utils
+
+  # ── State management ──────────────────────────────────────────────────────
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # ── Firebase ──────────────────────────────────────────────────────────────
+  firebase_core: ^3.13.1
+  firebase_auth: ^5.5.4
+  cloud_firestore: ^5.6.7
+  firebase_storage: ^12.4.5
+  firebase_messaging: ^15.2.5
+
+  # ── Navigation ────────────────────────────────────────────────────────────
+  go_router: ^14.8.1
+
+  # ── Maps & location ───────────────────────────────────────────────────────
+  google_maps_flutter: ^2.10.0
+  geolocator: ^13.0.4
+  geocoding: ^3.0.0
+
+  # ── UI ────────────────────────────────────────────────────────────────────
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # ── Code generation ───────────────────────────────────────────────────────
+  build_runner: ^2.4.15
+  riverpod_generator: ^2.6.5
+  custom_lint: ^0.7.5
+  riverpod_lint: ^2.6.5
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,16 @@
+name: utils
+description: "Shared utility functions for 24Boda — validators, formatters, date helpers, and constants."
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  # Pure Dart — no Flutter or Firebase dependencies.
+  # Keeps this package lean and universally usable.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

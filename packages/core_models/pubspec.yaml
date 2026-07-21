@@ -1,0 +1,16 @@
+name: core_models
+description: "Shared domain entities for the 24Boda platform. Pure Dart — no Firebase, no Flutter UI."
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  # Pure Dart package — no Flutter SDK dependency needed here.
+  # Entities are plain Dart classes only.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
