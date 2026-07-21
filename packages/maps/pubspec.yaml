@@ -1,0 +1,29 @@
+name: maps
+description: "Shared Google Maps integration for 24Boda — map widgets, location services, and routing."
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.12.2
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Internal
+  core_models:
+    path: ../core_models
+
+  # Maps & location
+  google_maps_flutter: ^2.10.0
+  geolocator: ^13.0.4
+  geocoding: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
