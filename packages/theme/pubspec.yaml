@@ -1,5 +1,5 @@
 name: theme
-description: "Shared design system for 24Boda — colors, typography, spacing, and reusable UI components."
+description: "24Boda design system — colors, typography, spacing, and ThemeData."
 version: 0.0.1
 publish_to: 'none'
 
@@ -10,6 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # DM Sans font — delivered via google_fonts, no manual asset management.
+  # google_fonts caches fonts on first use, works offline after that.
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
