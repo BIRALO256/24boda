@@ -10,7 +10,7 @@
 /// AppSpacing.md
 /// AppTheme.light
 /// ```
-library theme;
+library;
 
 export 'src/app_colors.dart';
 export 'src/app_spacing.dart';
