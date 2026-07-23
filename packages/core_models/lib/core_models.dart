@@ -20,7 +20,7 @@
 /// Shipment(...)
 /// ShipmentPrice(...)
 /// ```
-library core_models;
+library;
 
 // Enums
 export 'src/enums/shipment_status.dart';
