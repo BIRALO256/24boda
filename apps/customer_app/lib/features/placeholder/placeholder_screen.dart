@@ -30,7 +30,7 @@ class PlaceholderScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(appName),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: AppSpacing.screenPadding,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -27,7 +27,7 @@
 ///   packageSize: PackageSize.small,
 /// )
 /// ```
-library utils;
+library;
 
 export 'src/currency_formatter.dart';
 export 'src/date_formatter.dart';
