@@ -22,6 +22,7 @@
 /// 3. Keep the platform commission sustainable at 20%
 ///
 /// All amounts are in UGX.
+library;
 
 /// The size of the package being delivered.
 /// Customer selects this during booking from a 4-option picker.

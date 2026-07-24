@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1049236040481",
+    "project_id": "onelovebeautysalon-29ec2",
+    "storage_bucket": "onelovebeautysalon-29ec2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049236040481:android:ca548c352dff5b7a9a2c60",
+        "android_client_info": {
+          "package_name": "com.boda24.customer_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANpMZt9ikTs0mJrO4ba0pKkn3Nyhf4FeA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -16,7 +16,7 @@ dependencies:
   firebase_services:
     path: ../../packages/firebase_services
   maps:
-    path: ../../packages/maps
+    path: ../../packages/maps+
   notifications:
     path: ../../packages/notifications
   theme:
