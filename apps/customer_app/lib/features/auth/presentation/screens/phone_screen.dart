@@ -60,19 +60,28 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   }
 
   void _onPhoneChanged() {
-    final isValid = PhoneValidator.isValid(_phoneController.text.trim());
+    // Controller stores digits only e.g. "700123456"
+    // Prepend "0" to form the local Uganda format "0700123456"
+    // that PhoneValidator expects
+    final raw = _phoneController.text.trim();
+    final localFormat = raw.isNotEmpty ? '0$raw' : '';
+    final isValid = PhoneValidator.isValid(localFormat);
     if (isValid != _isValid) {
       setState(() => _isValid = isValid);
     }
+  }
+
+  /// Returns the full E.164 phone number from the controller value.
+  String get _fullPhone {
+    final raw = _phoneController.text.trim();
+    return '+256$raw';
   }
 
   Future<void> _onSendCode() async {
     if (!_formKey.currentState!.validate()) return;
     _phoneFocusNode.unfocus();
 
-    await ref.read(authNotifierProvider.notifier).sendOtp(
-          _phoneController.text.trim(),
-        );
+    await ref.read(authNotifierProvider.notifier).sendOtp(_fullPhone);
   }
 
   @override
@@ -109,83 +118,86 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // false = scaffold doesn't resize when keyboard appears.
+      // The SingleChildScrollView handles keyboard avoidance instead.
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: AppSpacing.screenPadding,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom -
-                  AppSpacing.lg * 2,
-            ),
-            child: IntrinsicHeight(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.xxxl),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                MediaQuery.of(context).padding.bottom,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppSpacing.xl),
 
-                    // Logo — confirms app identity before asking for personal info
-                    Center(
-                      child: Image.asset(
-                        'packages/theme/assets/images/logo.png',
-                        width: 120,
-                        fit: BoxFit.contain,
-                      ),
+                  // Logo
+                  Center(
+                    child: Image.asset(
+                      'packages/theme/assets/images/logo.png',
+                      width: 140,
+                      fit: BoxFit.contain,
                     ),
+                  ),
 
-                    const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.xl),
 
-                    // Headline
-                    Text(
-                      'Enter your phone number',
-                      style: AppTypography.headlineLarge,
-                    ),
+                  // Headline
+                  Text(
+                    'What\'s your\nphone number?',
+                    style: AppTypography.displayMedium,
+                  ),
 
-                    const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.sm),
 
-                    // Subheadline — sets expectation for next step
-                    Text(
-                      'We\'ll send you a verification code to confirm your number.',
-                      style: AppTypography.bodyMedium,
-                    ),
+                  Text(
+                    'We\'ll send you a verification code.',
+                    style: AppTypography.bodyMedium,
+                  ),
 
-                    const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Phone input field
-                    BodaPhoneField(
-                      controller: _phoneController,
-                      focusNode: _phoneFocusNode,
-                      autofocus: true,
-                      validator: PhoneValidator.errorMessage,
-                      onSubmitted: (_) => _isValid ? _onSendCode() : null,
-                    ),
+                  // Phone input
+                  BodaPhoneField(
+                    controller: _phoneController,
+                    focusNode: _phoneFocusNode,
+                    autofocus: true,
+                    validator: (value) {
+                      final raw = value?.trim() ?? '';
+                      if (raw.isEmpty) return 'Please enter your phone number';
+                      if (!PhoneValidator.isValid('0$raw')) {
+                        return 'Enter a valid Uganda number (e.g. 700 123 456)';
+                      }
+                      return null;
+                    },
+                    onSubmitted: (_) => _isValid ? _onSendCode() : null,
+                  ),
 
-                    const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Primary CTA
-                    BodaButton(
-                      label: 'Send Code',
-                      onPressed: _isValid ? _onSendCode : null,
-                      isLoading: isLoading,
-                      icon: Icons.arrow_forward_rounded,
-                    ),
+                  // CTA
+                  BodaButton(
+                    label: 'Send Code',
+                    onPressed: _isValid ? _onSendCode : null,
+                    isLoading: isLoading,
+                  ),
 
-                    const Spacer(),
+                  const Spacer(),
 
-                    // Legal text — required but not in the way
-                    const SizedBox(height: AppSpacing.xl),
-                    Text(
-                      'By continuing, you agree to our Terms of Service and Privacy Policy. Standard SMS rates may apply.',
-                      style: AppTypography.labelSmall,
-                      textAlign: TextAlign.center,
-                    ),
+                  // Legal
+                  Text(
+                    'By continuing you agree to our Terms of Service\nand Privacy Policy.',
+                    style: AppTypography.labelSmall,
+                    textAlign: TextAlign.center,
+                  ),
 
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
               ),
             ),
           ),

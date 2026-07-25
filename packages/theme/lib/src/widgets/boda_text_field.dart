@@ -132,46 +132,28 @@ class BodaPhoneField extends StatelessWidget {
       autofocus: autofocus,
       keyboardType: TextInputType.phone,
       textInputAction: TextInputAction.done,
-      style: AppTypography.bodyLarge,
-      // Only allow digits, spaces, and + for manual E.164 entry
+      style: AppTypography.titleLarge,
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[\d\s+]')),
-        LengthLimitingTextInputFormatter(15),
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(9),
       ],
       onFieldSubmitted: onSubmitted,
       validator: validator,
       decoration: InputDecoration(
-        labelText: 'Phone Number',
-        hintText: '0700 123 456',
-        // Uganda flag + country code prefix
-        prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.smMd,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '🇺🇬',
-                style: TextStyle(fontSize: 20),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                '+256',
-                style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Container(
-                width: 1,
-                height: 20,
-                color: AppColors.divider,
-              ),
-            ],
-          ),
+        hintText: '700 123 456',
+        hintStyle: AppTypography.titleLarge.copyWith(
+          color: AppColors.textDisabled,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        // prefixText is the simplest, overflow-safe way to show the country code.
+        // No Row, no IntrinsicWidth, no layout complexity.
+        prefixText: '🇺🇬  +256   ',
+        prefixStyle: AppTypography.bodyLarge.copyWith(
+          color: AppColors.dark,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
