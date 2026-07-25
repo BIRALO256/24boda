@@ -7,7 +7,7 @@ import 'package:customer_app/features/auth/presentation/providers/auth_state.dar
 import 'package:customer_app/features/auth/presentation/screens/otp_screen.dart';
 import 'package:customer_app/features/auth/presentation/screens/phone_screen.dart';
 import 'package:customer_app/features/auth/presentation/screens/splash_screen.dart';
-import 'package:customer_app/features/placeholder/placeholder_screen.dart';
+import 'package:customer_app/features/home/presentation/screens/home_screen.dart';
 
 /// Route path constants.
 ///
@@ -26,7 +26,6 @@ abstract final class Routes {
   static const String otp = '/otp';
 
   /// Customer home — shown after successful authentication.
-  /// Placeholder for now — replaced in Step 7 with real home screen.
   static const String home = '/home';
 }
 
@@ -132,13 +131,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Home — authenticated landing screen
+      // Home — real home screen with Google Maps
       GoRoute(
         path: Routes.home,
         pageBuilder: (context, state) => const MaterialPage(
-          child: PlaceholderScreen(
-            appName: '24Boda Customer',
-          ),
+          child: HomeScreen(),
         ),
       ),
     ],
