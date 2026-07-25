@@ -33,14 +33,12 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- Invisible reCAPTCHA anchor for Firebase Phone Auth on web.
+       Must exist in the DOM before signInWithPhoneNumber is called.
+       The 'invisible' size means no challenge is shown to the user
+       unless Google's risk engine flags the request as suspicious. -->
+  <div id="recaptcha-container"></div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
