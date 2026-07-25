@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Location permissions — required for GPS pickup location detection -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Foreground location — required when rider app tracks location while active -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:label="customer_app"
         android:name="${applicationName}"
@@ -30,6 +37,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Google Maps API key for Android.
+             Replace YOUR_GOOGLE_MAPS_API_KEY_HERE with your actual key.
+             Restrict this key in Google Cloud Console to:
+             Application restrictions → Android apps → com.boda24.customer_app -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBuM_jWsVdsVGkdiyzeZS3es3Qb2PCj9ck" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
