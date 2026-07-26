@@ -115,13 +115,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // OTP verification
-      // Extra params: verificationId + phoneNumber from PhoneScreen
       GoRoute(
         path: Routes.otp,
         pageBuilder: (context, state) {
-          final extra = state.extra as Map<String, String>?;
-          final verificationId = extra?[RouteParams.verificationId] ?? '';
-          final phoneNumber = extra?[RouteParams.phoneNumber] ?? '';
+          final extra = state.extra as Map<String, dynamic>?;
+          final verificationId =
+              extra?[RouteParams.verificationId] as String? ?? '';
+          final phoneNumber =
+              extra?[RouteParams.phoneNumber] as String? ?? '';
           return MaterialPage(
             child: OtpScreen(
               verificationId: verificationId,

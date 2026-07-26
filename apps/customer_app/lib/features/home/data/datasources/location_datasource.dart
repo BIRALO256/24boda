@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
+import 'package:geolocator_android/geolocator_android.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
@@ -58,12 +59,28 @@ class LocationDatasource {
       );
     }
 
-    // Step 4 — Get the current position
-    // LocationAccuracy.high — we need precise GPS for pickup location
+    // Step 4 — Get the current position.
+    // We use AndroidSettings with forceLocationManager: false to use
+    // Google's Fused Location Provider which intelligently combines
+    // GPS + WiFi + cell towers and picks the best available source.
+    // No timeLimit — let it wait for the best fix rather than cutting
+    // off at 10s and returning a WiFi-based inaccurate result.
+    if (kIsWeb) {
+      return Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+    }
+
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
+      locationSettings: AndroidSettings(
         accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 10),
+        // forceLocationManager: false uses Google Fused Location Provider
+        // which gives much better accuracy than raw GPS on Android
+        forceLocationManager: false,
+        // timeLimit removed — better to wait for accurate GPS
+        // than return fast but wrong WiFi position
       ),
     );
   }
