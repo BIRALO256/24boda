@@ -154,7 +154,7 @@ class _RouterRefreshNotifier extends ChangeNotifier {
     // Listen to auth state changes and notify the router
     ref.listen<AsyncValue<AuthState>>(
       authNotifierProvider,
-      (_, __) => notifyListeners(),
+      (previous, next) => notifyListeners(),
     );
   }
 }

@@ -1,7 +1,9 @@
-import 'package:core_models/core_models.dart';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
 
@@ -68,18 +70,69 @@ class LocationDatasource {
 
   /// Converts lat/lng coordinates to a human-readable address string.
   ///
-  /// Uses reverse geocoding via the geocoding package.
-  /// On web this calls the Google Maps Geocoding API.
-  /// On mobile this calls the platform's native geocoding service.
+  /// On web: calls Google Maps Geocoding API directly via HTTP.
+  /// On mobile: uses the geocoding package (native device geocoding).
   ///
-  /// Returns a formatted address string or a fallback coordinate string
-  /// if reverse geocoding fails (e.g. no network, unmapped area).
+  /// Why two approaches?
+  /// The geocoding package uses native iOS/Android geocoding APIs
+  /// which don't exist in a browser. On web we call the REST API directly.
   Future<String> getAddressFromCoordinates(double lat, double lng) async {
-    // Web doesn't support geocoding package — return coordinate string
     if (kIsWeb) {
+      return _getAddressWeb(lat, lng);
+    }
+    return _getAddressMobile(lat, lng);
+  }
+
+  /// Web: calls Google Maps Geocoding REST API.
+  /// Requires the Maps JavaScript API key to be loaded in index.html.
+  Future<String> _getAddressWeb(double lat, double lng) async {
+    // We read the API key from the script tag loaded in index.html
+    // by calling the Google Maps JS API geocoder via HTTP REST endpoint.
+    // This avoids hardcoding the key in Dart code.
+    const apiKey = String.fromEnvironment(
+      'GOOGLE_MAPS_API_KEY',
+      defaultValue: '',
+    );
+
+    if (apiKey.isEmpty) {
+      // Fallback if key not injected via --dart-define
+      // The address will show as coordinates on web dev
       return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
     }
 
+    try {
+      final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/geocode/json'
+        '?latlng=$lat,$lng&key=$apiKey',
+      );
+      final response = await http.get(url);
+      if (response.statusCode != 200) {
+        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final results = data['results'] as List?;
+      if (results == null || results.isEmpty) {
+        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+      }
+
+      // Use the first result's formatted_address
+      final formatted = results.first['formatted_address'] as String?;
+      if (formatted == null || formatted.isEmpty) {
+        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+      }
+
+      // Trim to the first two comma-separated parts for concise display
+      // "39 Bukoto St, Kampala, Uganda" → "39 Bukoto St, Kampala"
+      final parts = formatted.split(',');
+      return parts.take(2).map((p) => p.trim()).join(', ');
+    } catch (_) {
+      return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+    }
+  }
+
+  /// Mobile: uses the geocoding package (native device geocoding).
+  Future<String> _getAddressMobile(double lat, double lng) async {
     try {
       final placemarks = await geo.placemarkFromCoordinates(lat, lng);
       if (placemarks.isEmpty) {
@@ -87,9 +140,6 @@ class LocationDatasource {
       }
 
       final place = placemarks.first;
-
-      // Build a human-readable address from the placemark fields
-      // Priority: street → subLocality → locality → country
       final parts = <String>[
         if (place.name != null && place.name!.isNotEmpty) place.name!,
         if (place.street != null && place.street!.isNotEmpty) place.street!,
@@ -103,10 +153,8 @@ class LocationDatasource {
         return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       }
 
-      // Take first 2 parts for a concise display address
       return parts.take(2).join(', ');
     } catch (_) {
-      // Geocoding failed — return coordinates as fallback
       return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
     }
   }
