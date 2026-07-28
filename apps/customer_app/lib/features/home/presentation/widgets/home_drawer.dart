@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/auth/presentation/providers/auth_notifier.dart';
-import 'package:customer_app/features/auth/presentation/providers/auth_state.dart';
 
 /// Side drawer for the customer home screen.
 ///
