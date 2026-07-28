@@ -6,41 +6,16 @@ import 'package:theme/theme.dart';
 import 'package:customer_app/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
 import 'package:customer_app/features/home/presentation/providers/map_provider.dart';
+import 'package:customer_app/features/home/presentation/screens/name_collection_sheet.dart';
 import 'package:customer_app/features/home/presentation/widgets/delivery_bottom_sheet.dart';
+import 'package:customer_app/features/home/presentation/widgets/home_drawer.dart';
 import 'package:customer_app/features/home/presentation/widgets/home_top_bar.dart';
 import 'package:customer_app/features/home/presentation/widgets/map_view.dart';
-import 'package:customer_app/features/home/presentation/screens/name_collection_sheet.dart';
 
-/// The customer home screen.
+/// Customer home screen — pure orchestrator.
 ///
-/// This is a pure ORCHESTRATOR — it contains no business logic.
-/// It composes widgets, listens to state changes, and coordinates
-/// between providers. Every visual element lives in its own widget file.
-///
-/// Architecture decisions:
-///
-/// Stack layout (not Column/Row):
-/// The map must fill 100% of the screen. The top bar and bottom sheet
-/// float OVER the map. Stack is the only layout that allows this.
-/// A Column would push the map down — ruining the full-screen effect.
-///
-/// DraggableScrollableSheet for the bottom panel:
-/// The sheet snaps between three positions: collapsed (0.12),
-/// default (0.45), expanded (0.85). The snap points are tuned for
-/// the thumb zone on standard 5-6" Android phones used in Uganda.
-///
-/// Name collection triggers here, not in a separate route:
-/// Showing a bottom sheet (not a full screen) for name collection
-/// lets the user see the map behind it. They can see what they're
-/// signing up for while providing their name.
-/// Research: showing the product value during onboarding increases
-/// completion rates by 30-40% vs blocking with a full screen form.
-///
-/// Location fetch on mount:
-/// GPS fetch is triggered in initState — it runs once, in the background,
-/// while the map is already visible. The user sees the map immediately
-/// and the location pin drops in when GPS resolves.
-/// This is the Uber/Bolt pattern — never block the UI waiting for GPS.
+/// Stack layout: map fills 100%, top bar and bottom sheet float over it.
+/// Drawer opens from the left via the menu button in the top bar.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -49,24 +24,22 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
-    // Fetch GPS location on mount — non-blocking.
-    // The map shows immediately, location pin drops in when GPS resolves.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeScreen();
     });
   }
 
   Future<void> _initializeScreen() async {
-    // 1. Fetch current location
     await ref.read(locationNotifierProvider.notifier).fetchCurrentLocation();
 
-    // 2. Check if name collection is needed (first-time user)
     if (!mounted) return;
     final user = ref.read(currentUserProvider);
-    if (user != null && (user.name.isEmpty)) {
+    if (user != null && user.name.isEmpty) {
       _showNameCollectionSheet();
     }
   }
@@ -84,8 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // When GPS loads, animate the map camera to the user's position
-    // and drop the current location marker
+    // Animate camera and drop marker when GPS resolves
     ref.listen<AsyncValue<LocationState>>(
       locationNotifierProvider,
       (_, next) {
@@ -95,11 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               state.location.lat,
               state.location.lng,
             );
-
-            // Animate camera to GPS position
             ref.read(mapNotifierProvider.notifier).animateTo(pos);
-
-            // Add current location marker
             ref.read(mapMarkersProvider.notifier).state = {
               Marker(
                 markerId: const MarkerId('current_location'),
@@ -116,27 +84,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     return Scaffold(
-      // extendBodyBehindAppBar: no AppBar used — map fills everything
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
-      // resizeToAvoidBottomInset: false — the keyboard should not
-      // resize the map when search fields are focused
       resizeToAvoidBottomInset: false,
+      // Drawer opens from the left
+      drawer: const HomeDrawer(),
       body: Stack(
         children: [
-          // ── Layer 1: Full-screen map (bottom of stack) ───────────────────
+          // Layer 1 — full-screen map
           const Positioned.fill(
             child: MapView(),
           ),
 
-          // ── Layer 2: Floating top bar ────────────────────────────────────
-          const Positioned(
+          // Layer 2 — menu button only (top-left, SafeArea aware)
+          Positioned(
             top: 0,
             left: 0,
-            right: 0,
-            child: HomeTopBar(),
+            child: HomeTopBar(
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
           ),
 
-          // ── Layer 3: Draggable bottom sheet ──────────────────────────────
+          // Layer 3 — draggable bottom sheet
           DraggableScrollableSheet(
             initialChildSize: 0.42,
             minChildSize: 0.12,
@@ -150,9 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
 
-          // ── Layer 4: My location FAB ─────────────────────────────────────
-          // Positioned above the default bottom sheet height (0.42)
-          // so it's always visible and reachable with the right thumb
+          // Layer 4 — my location FAB
           Positioned(
             right: AppSpacing.md,
             bottom: MediaQuery.of(context).size.height * 0.44,

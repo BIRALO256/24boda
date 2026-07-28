@@ -136,27 +136,35 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                 children: [
                   const SizedBox(height: AppSpacing.xl),
 
-                  // Logo
+                  // Phone icon — represents SMS verification clearly
                   Center(
-                    child: Image.asset(
-                      'packages/theme/assets/images/logo.png',
-                      width: 140,
-                      fit: BoxFit.contain,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primarySurface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.smartphone_rounded,
+                        color: AppColors.primary,
+                        size: 40,
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: AppSpacing.xl),
 
-                  // Headline
+                  // Headline — short question, conversational, one line
                   Text(
-                    'What\'s your\nphone number?',
+                    'Your phone number?',
                     style: AppTypography.displayMedium,
                   ),
 
                   const SizedBox(height: AppSpacing.sm),
 
                   Text(
-                    'We\'ll send you a verification code.',
+                    'We\'ll text you a code.',
                     style: AppTypography.bodyMedium,
                   ),
 

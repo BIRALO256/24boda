@@ -166,9 +166,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
 
-              // Icon — visual anchor for the screen
+              // SMS icon — more direct than chat bubble
               Container(
                 width: AppSpacing.avatarLg,
                 height: AppSpacing.avatarLg,
@@ -177,7 +177,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.sms_outlined,
+                  Icons.sms_rounded,
                   color: AppColors.primary,
                   size: AppSpacing.iconXl,
                 ),
@@ -185,20 +185,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               const SizedBox(height: AppSpacing.lg),
 
-              // Headline
+              // Headline — tells user what to do physically, not technically
               Text(
-                'Enter verification code',
+                'Check your messages',
                 style: AppTypography.headlineLarge,
               ),
 
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.xs),
 
-              // Masked phone confirmation
+              // Subtext — warm, conversational, matches phone screen tone
               RichText(
                 text: TextSpan(
                   style: AppTypography.bodyMedium,
                   children: [
-                    const TextSpan(text: 'Code sent to '),
+                    const TextSpan(text: 'We texted a code to '),
                     TextSpan(
                       text: _maskedPhone(widget.phoneNumber),
                       style: AppTypography.bodyMedium.copyWith(
@@ -210,7 +210,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
               ),
 
-              const SizedBox(height: AppSpacing.xxxl),
+              const SizedBox(height: AppSpacing.xxl),
 
               // OTP boxes — centred, prominent
               BodaOtpField(
@@ -219,7 +219,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 autofocus: true,
               ),
 
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
 
               // Loading indicator during verification
               if (isVerifying) ...[
@@ -228,7 +228,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Verifying...',
                   style: AppTypography.bodyMedium,
@@ -236,47 +236,43 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
               ],
 
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
 
-              // Countdown timer + resend
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (!_canResend) ...[
-                    const Icon(
-                      Icons.timer_outlined,
-                      size: AppSpacing.iconMd,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(
-                      'Resend code in ${DateFormatter.countdown(
-                        Duration(seconds: _remainingSeconds),
-                      )}',
-                      style: AppTypography.bodyMedium,
-                    ),
-                  ] else ...[
-                    Text(
-                      'Didn\'t receive the code? ',
-                      style: AppTypography.bodyMedium,
-                    ),
-                    GestureDetector(
-                      onTap: _onResend,
-                      child: Text(
-                        'Resend',
+              // Countdown timer + resend — no icon, just clean text
+              Center(
+                child: !_canResend
+                    ? Text(
+                        'Resend in ${DateFormatter.countdown(Duration(seconds: _remainingSeconds))}',
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColors.primary,
+                          color: AppColors.textSecondary,
+                        ),
+                      )
+                    : GestureDetector(
+                        onTap: _onResend,
+                        child: RichText(
+                          text: TextSpan(
+                            style: AppTypography.bodyMedium,
+                            children: [
+                              const TextSpan(
+                                text: 'Didn\'t get it? ',
+                                style: TextStyle(color: AppColors.textSecondary),
+                              ),
+                              TextSpan(
+                                text: 'Resend',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ],
               ),
 
-              const SizedBox(height: AppSpacing.xxxl),
+              const SizedBox(height: AppSpacing.xl),
             ],
           ),
         ),
