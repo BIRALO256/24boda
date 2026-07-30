@@ -1,6 +1,10 @@
 import 'package:core_models/src/enums/shipment_status.dart';
 import 'package:core_models/src/value_objects/location.dart';
 
+// PackageSize is defined in utils but re-exported here as a string field
+// on the Shipment entity. The domain layer stores it as a string to avoid
+// a dependency on the utils package from core_models.
+
 /// The core business object of the 24Boda platform.
 ///
 /// Every delivery job is a [Shipment]. It holds the full lifecycle
@@ -32,6 +36,7 @@ class Shipment {
     required this.createdAt,
     required this.updatedAt,
     this.riderId,
+    this.packageSize,
     this.packageDescription,
     this.packagePhotoUrl,
     this.customerNote,
@@ -71,6 +76,11 @@ class Shipment {
   final Location dropoff;
 
   // ── Package details ────────────────────────────────────────────────────────
+
+  /// Package size category — affects pricing.
+  /// Stored as a string ('small', 'medium', 'large', 'fragile').
+  /// Null until the customer selects it during booking.
+  final String? packageSize;
 
   /// Optional description of what's being sent.
   /// Shown to the rider so they know what to expect to handle.
@@ -170,6 +180,7 @@ class Shipment {
     ShipmentStatus? status,
     Location? pickup,
     Location? dropoff,
+    String? packageSize,
     String? packageDescription,
     String? packagePhotoUrl,
     String? customerNote,
@@ -192,6 +203,7 @@ class Shipment {
       status: status ?? this.status,
       pickup: pickup ?? this.pickup,
       dropoff: dropoff ?? this.dropoff,
+      packageSize: packageSize ?? this.packageSize,
       packageDescription: packageDescription ?? this.packageDescription,
       packagePhotoUrl: packagePhotoUrl ?? this.packagePhotoUrl,
       customerNote: customerNote ?? this.customerNote,
@@ -219,6 +231,7 @@ class Shipment {
       'status': status.value,
       'pickup': pickup.toMap(),
       'dropoff': dropoff.toMap(),
+      if (packageSize != null) 'packageSize': packageSize,
       if (packageDescription != null) 'packageDescription': packageDescription,
       if (packagePhotoUrl != null) 'packagePhotoUrl': packagePhotoUrl,
       if (customerNote != null) 'customerNote': customerNote,
@@ -245,6 +258,7 @@ class Shipment {
       status: ShipmentStatus.fromValue(map['status'] as String),
       pickup: Location.fromMap(map['pickup'] as Map<String, dynamic>),
       dropoff: Location.fromMap(map['dropoff'] as Map<String, dynamic>),
+      packageSize: map['packageSize'] as String?,
       packageDescription: map['packageDescription'] as String?,
       packagePhotoUrl: map['packagePhotoUrl'] as String?,
       customerNote: map['customerNote'] as String?,
