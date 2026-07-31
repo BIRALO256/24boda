@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
+import 'package:customer_app/features/shipment/presentation/screens/address_search_screen.dart';
 
 /// The draggable bottom sheet on the home screen.
 ///
@@ -85,8 +86,12 @@ class DeliveryBottomSheet extends ConsumerWidget {
                 // ── Primary CTA — where to deliver ────────────────────────
                 _WhereToDeliverButton(
                   onTap: () {
-                    // TODO: navigate to address search screen in Step 8
-                    // (shipment creation feature)
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const AddressSearchScreen(),
+                    );
                   },
                 ),
 
