@@ -7,6 +7,7 @@ import 'package:customer_app/features/home/presentation/providers/location_provi
 import 'package:customer_app/features/shipment/domain/models/place_suggestion.dart';
 import 'package:customer_app/features/shipment/presentation/providers/address_search_provider.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
+import 'package:customer_app/features/shipment/presentation/screens/delivery_details_screen.dart';
 
 /// Address search screen — slides up as a bottom sheet over the map.
 ///
@@ -102,8 +103,15 @@ class _AddressSearchScreenState extends ConsumerState<AddressSearchScreen> {
           pickup: pickup,
         );
 
-    // Close the search sheet and open delivery details
-    if (mounted) Navigator.of(context).pop(dropoff);
+    // Close the search sheet and push to delivery details
+    if (mounted) {
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const DeliveryDetailsScreen(),
+        ),
+      );
+    }
   }
 
   @override
