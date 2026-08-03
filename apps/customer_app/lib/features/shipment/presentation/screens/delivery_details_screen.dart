@@ -84,7 +84,7 @@ class _DeliveryDetailsScreenState
     // If state regressed (user went back), pop this screen
     if (state is! ShipmentCreationAddressPicked) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && state is ShipmentCreationIdle) {
+        if (context.mounted && state is ShipmentCreationIdle) {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       });

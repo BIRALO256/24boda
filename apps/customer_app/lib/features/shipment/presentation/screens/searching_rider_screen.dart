@@ -4,6 +4,7 @@ import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/shipment/domain/usecases/watch_shipment.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
+import 'package:customer_app/features/tracking/presentation/screens/tracking_screen.dart';
 import 'package:core_models/core_models.dart';
 
 /// Screen 4 — Searching for a rider.
@@ -36,11 +37,13 @@ class SearchingRiderScreen extends ConsumerWidget {
       next.whenData((shipment) {
         if (shipment.status == ShipmentStatus.accepted ||
             shipment.status.isActive) {
-          // TODO: navigate to tracking screen in next step
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Rider found! Tracking screen coming next.'),
-              backgroundColor: AppColors.success,
+          // Rider accepted — navigate to real-time tracking screen
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => TrackingScreen(
+                shipmentId: shipmentId,
+                riderId: shipment.riderId ?? '',
+              ),
             ),
           );
         } else if (shipment.status == ShipmentStatus.cancelled) {
@@ -91,7 +94,7 @@ class SearchingRiderScreen extends ConsumerWidget {
               shipmentAsync.when(
                 data: (shipment) => _ShipmentSummaryCard(shipment: shipment),
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (error, stack) => const SizedBox.shrink(),
               ),
 
               const Spacer(),
@@ -128,9 +131,9 @@ class _PulsingRiderSearch extends StatefulWidget {
 
 class _PulsingRiderSearchState extends State<_PulsingRiderSearch>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _opacityAnimation;
 
   @override
   void initState() {
@@ -167,7 +170,7 @@ class _PulsingRiderSearchState extends State<_PulsingRiderSearch>
             // Pulsing ring
             AnimatedBuilder(
               animation: _controller,
-              builder: (_, __) => Transform.scale(
+              builder: (context, child) => Transform.scale(
                 scale: _scaleAnimation.value,
                 child: Opacity(
                   opacity: _opacityAnimation.value,

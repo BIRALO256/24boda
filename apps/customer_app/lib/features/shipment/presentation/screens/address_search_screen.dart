@@ -442,7 +442,7 @@ class _SuggestionsList extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: suggestions.length,
-      separatorBuilder: (_, __) =>
+      separatorBuilder: (_, index) =>
           const Divider(height: 1, indent: 64),
       itemBuilder: (_, index) {
         final suggestion = suggestions[index];
