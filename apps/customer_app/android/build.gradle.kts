@@ -3,29 +3,33 @@ allprojects {
         google()
         mavenCentral()
     }
-}
 
-// Force all subprojects to use SDK 36 and JVM 17 via toolchain.
-// The JVM Toolchain approach is the recommended fix for
-// "Inconsistent JVM-target compatibility" errors — it sets both
-// Java and Kotlin to the same JVM at the toolchain level so they
-// can never diverge regardless of plugin or AGP version.
-subprojects {
-    // Apply toolchain to Kotlin tasks
-    plugins.withType<org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin> {
-        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension> {
-            jvmToolchain(17)
-        }
+    // Apply JVM 17 to ALL Java compile tasks across every subproject.
+    // Using allprojects + configureEach runs BEFORE afterEvaluate so
+    // it catches google_api_headers which configures itself early.
+    tasks.withType<JavaCompile>().configureEach {
+        sourceCompatibility = "17"
+        targetCompatibility = "17"
     }
 
+    // Apply JVM 17 to ALL Kotlin compile tasks across every subproject.
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>()
+        .configureEach {
+            compilerOptions {
+                jvmTarget.set(
+                    org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+                )
+            }
+        }
+}
+
+subprojects {
     afterEvaluate {
-        // Fix compileSdk for all Android library plugins
-        extensions.findByType<com.android.build.api.dsl.LibraryExtension>()?.apply {
-            compileSdk = 36
-        }
-        extensions.findByType<com.android.build.api.dsl.ApplicationExtension>()?.apply {
-            compileSdk = 36
-        }
+        // Fix compileSdk for Android library plugins
+        extensions.findByType<com.android.build.api.dsl.LibraryExtension>()
+            ?.compileSdk = 36
+        extensions.findByType<com.android.build.api.dsl.ApplicationExtension>()
+            ?.compileSdk = 36
     }
 }
 
