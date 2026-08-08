@@ -23,7 +23,11 @@ plugins {
     // START: FlutterFire Configuration
     id("com.google.gms.google-services") version("4.3.15") apply false
     // END: FlutterFire Configuration
-    id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+    // KGP declared here at root so ALL subprojects including
+    // google_api_headers and package_info_plus use the same version.
+    // This prevents "Inconsistent JVM-target compatibility" errors.
+    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.jvm") version "2.1.0" apply false
 }
 
 include(":app")

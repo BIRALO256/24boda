@@ -45,8 +45,6 @@ dependencies:
   google_maps_flutter: ^2.10.0
   geolocator: ^13.0.4
   geocoding: ^3.0.0
-  # Google Places autocomplete for address search
-  flutter_google_places_hoc081098: ^2.0.0
 
   # ── UI ────────────────────────────────────────────────────────────────────
   cupertino_icons: ^1.0.8
