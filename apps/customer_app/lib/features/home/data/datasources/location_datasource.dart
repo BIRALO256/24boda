@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
-import 'package:geolocator_android/geolocator_android.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
@@ -74,13 +73,8 @@ class LocationDatasource {
     }
 
     return Geolocator.getCurrentPosition(
-      locationSettings: AndroidSettings(
+      locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        // forceLocationManager: false uses Google Fused Location Provider
-        // which gives much better accuracy than raw GPS on Android
-        forceLocationManager: false,
-        // timeLimit removed — better to wait for accurate GPS
-        // than return fast but wrong WiFi position
       ),
     );
   }
@@ -108,7 +102,7 @@ class LocationDatasource {
     // This avoids hardcoding the key in Dart code.
     const apiKey = String.fromEnvironment(
       'GOOGLE_MAPS_API_KEY',
-      defaultValue: '',
+      defaultValue: 'AIzaSyBuM_jWsVdsVGkdiyzeZS3es3Qb2PCj9ck',
     );
 
     if (apiKey.isEmpty) {
@@ -157,9 +151,16 @@ class LocationDatasource {
       }
 
       final place = placemarks.first;
+
+      // Build address from most specific to least specific.
+      // We intentionally skip place.name because in Uganda the geocoder
+      // returns Plus Codes (e.g. "8HP7+H29") as the name for locations
+      // without registered street addresses — not useful to display.
       final parts = <String>[
-        if (place.name != null && place.name!.isNotEmpty) place.name!,
-        if (place.street != null && place.street!.isNotEmpty) place.street!,
+        if (place.street != null &&
+            place.street!.isNotEmpty &&
+            !place.street!.contains('+')) // skip Plus Code streets
+          place.street!,
         if (place.subLocality != null && place.subLocality!.isNotEmpty)
           place.subLocality!,
         if (place.locality != null && place.locality!.isNotEmpty)
@@ -167,6 +168,11 @@ class LocationDatasource {
       ];
 
       if (parts.isEmpty) {
+        // Last fallback — use thoroughfare or admin area
+        final fallback = place.thoroughfare ??
+            place.subAdministrativeArea ??
+            place.administrativeArea;
+        if (fallback != null && fallback.isNotEmpty) return fallback;
         return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       }
 

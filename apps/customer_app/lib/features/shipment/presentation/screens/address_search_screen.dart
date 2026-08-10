@@ -18,7 +18,7 @@ import 'package:customer_app/features/shipment/presentation/screens/delivery_det
 /// Baymard Institute: users need to see their surroundings when
 /// picking a delivery destination. A full-screen takeover removes
 /// that context and increases cognitive load.
-///
+/// 
 /// Auto-focus on open:
 /// Fitts's Law — user tapped "Where to deliver?" with clear intent.
 /// Opening the keyboard immediately removes one tap of friction.
