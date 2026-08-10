@@ -24,9 +24,16 @@ class PlacesDatasource {
 
   final http.Client _client;
 
+  // API key — injected via --dart-define at build time.
+  // Falls back to the hardcoded Android manifest key for mobile builds
+  // where --dart-define was not used.
+  // The key in AndroidManifest.xml is for Google Maps rendering only,
+  // but the same key works for Places API calls too.
   static const String _apiKey = String.fromEnvironment(
     'GOOGLE_MAPS_API_KEY',
-    defaultValue: '',
+    // Fallback to the same key used in AndroidManifest.xml
+    // This ensures Places search works on mobile without --dart-define
+    defaultValue: 'AIzaSyBuM_jWsVdsVGkdiyzeZS3es3Qb2PCj9ck',
   );
 
   static const String _autocompleteUrl =
