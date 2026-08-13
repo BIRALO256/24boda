@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
+import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
+import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_state.dart';
 import 'package:customer_app/features/shipment/presentation/screens/address_search_screen.dart';
 
 /// The draggable bottom sheet on the home screen.
@@ -43,6 +45,15 @@ class DeliveryBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationState = ref.watch(locationNotifierProvider).valueOrNull;
+    final shipmentState = ref.watch(shipmentCreationProvider);
+
+    // Get the selected dropoff address if user already picked one
+    String? selectedDropoff;
+    if (shipmentState is ShipmentCreationAddressPicked) {
+      selectedDropoff = shipmentState.dropoff.address;
+    } else if (shipmentState is ShipmentCreationDetailsEntered) {
+      selectedDropoff = shipmentState.dropoff.address;
+    }
 
     return Container(
       decoration: const BoxDecoration(
@@ -85,6 +96,7 @@ class DeliveryBottomSheet extends ConsumerWidget {
 
                 // ── Primary CTA — where to deliver ────────────────────────
                 _WhereToDeliverButton(
+                  selectedAddress: selectedDropoff,
                   onTap: () {
                     showModalBottomSheet(
                       context: context,
@@ -255,12 +267,18 @@ class _PickupLocationTile extends StatelessWidget {
 /// Styled as a search field — communicates "tap and type your destination."
 /// Orange background on the icon differentiates it from the pickup tile above.
 class _WhereToDeliverButton extends StatelessWidget {
-  const _WhereToDeliverButton({required this.onTap});
+  const _WhereToDeliverButton({
+    required this.onTap,
+    this.selectedAddress,
+  });
 
   final VoidCallback onTap;
+  final String? selectedAddress;
 
   @override
   Widget build(BuildContext context) {
+    final hasAddress = selectedAddress != null && selectedAddress!.isNotEmpty;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -271,10 +289,14 @@ class _WhereToDeliverButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: AppSpacing.inputRadius,
-          border: Border.all(color: AppColors.primary, width: 1.5),
+          border: Border.all(
+            color: hasAddress ? AppColors.success : AppColors.primary,
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: (hasAddress ? AppColors.success : AppColors.primary)
+                  .withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -285,12 +307,14 @@ class _WhereToDeliverButton extends StatelessWidget {
             Container(
               width: 32,
               height: 32,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
+              decoration: BoxDecoration(
+                color: hasAddress ? AppColors.success : AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.search_rounded,
+              child: Icon(
+                hasAddress
+                    ? Icons.location_on_rounded
+                    : Icons.search_rounded,
                 color: AppColors.background,
                 size: AppSpacing.iconMd,
               ),
@@ -300,16 +324,20 @@ class _WhereToDeliverButton extends StatelessWidget {
 
             Expanded(
               child: Text(
-                'Where to deliver?',
+                hasAddress ? selectedAddress! : 'Where to deliver?',
                 style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.textSecondary,
+                  color: hasAddress
+                      ? AppColors.dark
+                      : AppColors.textSecondary,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
 
-            const Icon(
+            Icon(
               Icons.arrow_forward_rounded,
-              color: AppColors.primary,
+              color: hasAddress ? AppColors.success : AppColors.primary,
               size: AppSpacing.iconMd,
             ),
           ],
