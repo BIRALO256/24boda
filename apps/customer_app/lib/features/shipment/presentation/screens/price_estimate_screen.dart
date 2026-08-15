@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:theme/theme.dart';
 import 'package:utils/utils.dart';
@@ -6,6 +7,7 @@ import 'package:utils/utils.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_state.dart';
 import 'package:customer_app/features/shipment/presentation/screens/searching_rider_screen.dart';
+import 'package:customer_app/features/shipment/presentation/widgets/shipment_step_indicator.dart';
 
 /// Screen 3 — Price estimate and booking confirmation.
 ///
@@ -73,7 +75,7 @@ class PriceEstimateScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Step indicator
-                    _StepIndicator(currentStep: 3),
+                    const ShipmentStepIndicator(currentStep: 3),
 
                     const SizedBox(height: AppSpacing.xl),
 
@@ -144,50 +146,6 @@ class PriceEstimateScreen extends ConsumerWidget {
 }
 
 // ── Sub-widgets ────────────────────────────────────────────────────────────
-
-class _StepIndicator extends StatelessWidget {
-  const _StepIndicator({required this.currentStep});
-  final int currentStep;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(3, (index) {
-        final step = index + 1;
-        final isActive = step <= currentStep;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: index < 2 ? AppSpacing.xs : 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: isActive ? AppColors.primary : AppColors.divider,
-                    borderRadius: AppSpacing.fullRadius,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  ['Address', 'Details', 'Price'][index],
-                  style: AppTypography.labelSmall.copyWith(
-                    color: step == currentStep
-                        ? AppColors.primary
-                        : AppColors.textDisabled,
-                    fontWeight: step == currentStep
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
 
 class _RouteCard extends StatelessWidget {
   const _RouteCard({required this.state});
