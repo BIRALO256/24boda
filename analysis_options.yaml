@@ -1,8 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # 24Boda — Shared Lint Rules (applied across all apps and packages)
+# Note: No 'include' here — the root workspace is not a Flutter package.
+# Each app and package includes flutter_lints via their own pubspec.yaml.
 # ─────────────────────────────────────────────────────────────────────────────
-
-include: package:flutter_lints/flutter.yaml
 
 analyzer:
   errors:
@@ -18,10 +18,10 @@ linter:
     always_declare_return_types: true
     prefer_const_constructors: true
     prefer_const_declarations: true
-    avoid_print: true            # Use proper logging instead
+    avoid_print: true
 
     # ── Clean architecture enforcement ─────────────────────────────────────
-    always_use_package_imports: true  # No relative imports across packages
+    always_use_package_imports: true
 
     # ── Safety ─────────────────────────────────────────────────────────────
     avoid_dynamic_calls: true
