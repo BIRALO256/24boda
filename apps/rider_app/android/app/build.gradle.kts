@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.boda24.rider_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
