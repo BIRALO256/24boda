@@ -196,7 +196,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppSpacing.inputRadius,
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.dark, width: 1.5),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppSpacing.inputRadius,
