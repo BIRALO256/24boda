@@ -1,25 +1,18 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'firebase_options.dart';
 
-/// Bootstrap entry point for the 24Boda Rider App.
-///
-/// Responsibilities of main():
-/// 1. Ensure Flutter engine is fully initialised before any async work
-/// 2. Wrap the entire app in [ProviderScope] — required by Riverpod
-/// 3. Hand off to [RiderApp] for all UI and routing
-///
-/// Nothing else belongs here. Business logic, Firebase initialisation,
-/// and routing all live in [RiderApp] and its dependencies.
-void main() {
-  // Required when calling any Flutter service before runApp()
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
-    // ProviderScope is the Riverpod dependency injection container.
-    // It must wrap the entire widget tree — nothing above it can
-    // use Riverpod providers.
     const ProviderScope(
       child: RiderApp(),
     ),

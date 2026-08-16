@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:theme/src/app_colors.dart';
 import 'package:theme/src/app_spacing.dart';
-import 'package:theme/src/app_typography.dart';
 
 /// The 24Boda primary action button.
 ///
