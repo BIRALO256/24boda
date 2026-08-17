@@ -5,16 +5,6 @@ import 'package:utils/utils.dart';
 import 'package:rider_app/features/auth/data/datasources/firebase_auth_datasource.dart';
 import 'package:rider_app/features/auth/domain/repositories/auth_repository.dart';
 
-/// Concrete implementation of [AuthRepository] for the rider app.
-///
-/// THE KEY DIFFERENCE from the customer app:
-/// After OTP verification, this implementation checks that
-/// the user's role is 'rider'. If it's 'customer' or 'admin',
-/// it signs them out immediately and throws [RiderRoleException].
-///
-/// This is the enforcement point — one check, enforced once,
-/// in the data layer where it belongs. The UI just reacts to
-/// the exception with a clear error message.
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._datasource);
 
@@ -46,25 +36,22 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final profile = await _datasource.getUserProfile(firebaseUser.uid);
 
-    // ── Role check — the critical gate ────────────────────────────────
-    // If no profile exists, this is a new signup via the rider app.
-    // We do NOT create a new profile here — riders are registered by
-    // admins only. An unknown user is treated as unauthorized.
+    // Case 1 — No profile at all: never registered by admin
     if (profile == null) {
       await _datasource.signOut();
-      throw const RiderRoleException();
+      throw const NotRegisteredRiderException();
     }
 
-    // If profile exists but role is not rider — block access
+    // Case 2 — Profile exists but not a rider
     if (!profile.isRider) {
       await _datasource.signOut();
-      throw const RiderRoleException();
+      throw WrongRoleException(profile.role);
     }
 
-    // If account is inactive (banned/suspended) — block access
+    // Case 3 — Rider account exists but is inactive/banned
     if (!profile.isActive) {
       await _datasource.signOut();
-      throw const RiderRoleException();
+      throw const InactiveRiderException();
     }
 
     return profile;
@@ -76,13 +63,10 @@ class AuthRepositoryImpl implements AuthRepository {
     if (firebaseUser == null) return null;
 
     final profile = await _datasource.getUserProfile(firebaseUser.uid);
-
-    // Also enforce role check on session restore
     if (profile == null || !profile.isRider || !profile.isActive) {
       await _datasource.signOut();
       return null;
     }
-
     return profile;
   }
 

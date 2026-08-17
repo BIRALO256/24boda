@@ -51,7 +51,13 @@ class AuthRepositoryImpl implements AuthRepository {
     // 2. Try to fetch existing Firestore profile
     UserProfile? profile = await _datasource.getUserProfile(firebaseUser.uid);
 
-    // 3. First time login — create the Firestore document
+    // 3. If profile exists but role is rider — block access to customer app
+    if (profile != null && profile.isRider) {
+      await _datasource.signOut();
+      throw const CustomerAppRiderException();
+    }
+
+    // 4. First time login — create the Firestore document
     if (profile == null) {
       profile = await _datasource.createUserProfile(
         uid: firebaseUser.uid,
@@ -97,3 +103,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
     ref.watch(firebaseAuthDatasourceProvider),
   );
 });
+
+/// Thrown when a rider tries to log into the customer app.
+class CustomerAppRiderException implements Exception {
+  const CustomerAppRiderException();
+}

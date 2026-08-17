@@ -100,10 +100,10 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         otpCode: otpCode,
       );
       state = AsyncData(AuthAuthenticated(user: user));
+    } on CustomerAppRiderException {
+      state = const AsyncData(AuthWrongRoleRider());
     } catch (e) {
-      state = AsyncData(
-        AuthError(message: _mapError(e)),
-      );
+      state = AsyncData(AuthError(message: _mapError(e)));
     }
   }
 

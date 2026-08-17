@@ -77,6 +77,11 @@ final class AuthAuthenticated extends AuthState {
 /// [message] is already user-friendly (mapped in the datasource).
 final class AuthError extends AuthState {
   const AuthError({required this.message});
-
   final String message;
+}
+
+/// Phone number is registered as a rider trying to access the customer app.
+/// UI shows: "This number is registered as a rider. Use the 24Boda Rider app."
+final class AuthWrongRoleRider extends AuthState {
+  const AuthWrongRoleRider();
 }

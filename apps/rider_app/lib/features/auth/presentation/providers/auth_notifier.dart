@@ -7,7 +7,6 @@ import 'package:rider_app/features/auth/domain/usecases/send_otp.dart';
 import 'package:rider_app/features/auth/domain/usecases/sign_out.dart';
 import 'package:rider_app/features/auth/domain/usecases/verify_otp.dart';
 import 'package:rider_app/features/auth/presentation/providers/auth_state.dart';
-
 class AuthNotifier extends AsyncNotifier<AuthState> {
   late SendOtp _sendOtp;
   late VerifyOtp _verifyOtp;
@@ -71,9 +70,12 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         otpCode: otpCode,
       );
       state = AsyncData(AuthAuthenticated(user: user));
-    } on RiderRoleException {
-      // Specific state for wrong role — shows a clear message
-      state = const AsyncData(AuthWrongRole());
+    } on NotRegisteredRiderException {
+      state = const AsyncData(AuthNotRegistered());
+    } on WrongRoleException {
+      state = const AsyncData(AuthWrongRoleCustomer());
+    } on InactiveRiderException {
+      state = const AsyncData(AuthAccountInactive());
     } catch (e) {
       state = AsyncData(AuthError(message: _mapError(e)));
     }

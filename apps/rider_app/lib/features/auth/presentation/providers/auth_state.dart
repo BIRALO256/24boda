@@ -1,9 +1,5 @@
 import 'package:core_models/core_models.dart';
 
-/// Auth state machine for the rider app.
-/// Identical structure to the customer app.
-/// The role enforcement happens in the data layer —
-/// by the time state reaches here, it's already verified rider-only.
 sealed class AuthState {
   const AuthState();
 }
@@ -25,7 +21,6 @@ final class AuthOtpSent extends AuthState {
     required this.verificationId,
     required this.phoneNumber,
   });
-
   final String verificationId;
   final String phoneNumber;
 }
@@ -39,11 +34,22 @@ final class AuthAuthenticated extends AuthState {
   final UserProfile user;
 }
 
-/// Shown when a non-rider account tries to log into the rider app.
-/// Has a dedicated state so the UI can show a specific message —
-/// not a generic error — explaining which app to use instead.
-final class AuthWrongRole extends AuthState {
-  const AuthWrongRole();
+/// Phone number has no account — never registered by admin.
+/// UI shows: "This number isn't registered. Contact 24Boda to get onboarded."
+final class AuthNotRegistered extends AuthState {
+  const AuthNotRegistered();
+}
+
+/// Phone number is registered but as a customer — not a rider.
+/// UI shows: "This number is registered as a customer. Use the 24Boda customer app."
+final class AuthWrongRoleCustomer extends AuthState {
+  const AuthWrongRoleCustomer();
+}
+
+/// Rider account exists but has been deactivated.
+/// UI shows: "Your account has been suspended. Contact 24Boda support."
+final class AuthAccountInactive extends AuthState {
+  const AuthAccountInactive();
 }
 
 final class AuthError extends AuthState {

@@ -92,11 +92,33 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     ref.listen<AsyncValue<AuthState>>(authNotifierProvider, (_, next) {
       next.whenData((state) {
         if (state is AuthOtpSent) {
-          // Navigate to OTP screen
           context.goToOtp(
             verificationId: state.verificationId,
             phoneNumber: state.phoneNumber,
           );
+        }
+        if (state is AuthWrongRoleRider) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: Text(
+                'Wrong app',
+                style: AppTypography.headlineSmall,
+              ),
+              content: Text(
+                'This number is registered as a rider. '
+                'Please use the 24Boda Rider app instead.',
+                style: AppTypography.bodyMedium,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          ref.read(authNotifierProvider.notifier).resetError();
         }
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
