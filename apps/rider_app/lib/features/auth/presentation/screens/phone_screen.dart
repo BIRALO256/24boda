@@ -49,6 +49,30 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     await ref.read(authNotifierProvider.notifier).sendOtp(_fullPhone);
   }
 
+  /// Uses a dialog instead of a snackbar for blocking errors.
+  /// Why: a snackbar can be missed or dismissed accidentally.
+  /// A dialog requires explicit acknowledgement — the user reads it.
+  /// For security-related blocks this is the correct pattern.
+  void _showBlockedDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title, style: AppTypography.headlineSmall),
+        content: Text(message, style: AppTypography.bodyMedium),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
@@ -62,15 +86,30 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
             phoneNumber: state.phoneNumber,
           );
         }
-        if (state is AuthWrongRole) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'This number is registered as a customer. '
-                'Please use the 24Boda customer app.',
-              ),
-              duration: Duration(seconds: 5),
-            ),
+        if (state is AuthNotRegistered) {
+          _showBlockedDialog(
+            context,
+            title: 'Not registered',
+            message:
+                'This number isn\'t registered as a rider. Contact 24Boda to get onboarded.',
+          );
+          ref.read(authNotifierProvider.notifier).resetError();
+        }
+        if (state is AuthWrongRoleCustomer) {
+          _showBlockedDialog(
+            context,
+            title: 'Wrong app',
+            message:
+                'This number is registered as a customer. Please use the 24Boda customer app.',
+          );
+          ref.read(authNotifierProvider.notifier).resetError();
+        }
+        if (state is AuthAccountInactive) {
+          _showBlockedDialog(
+            context,
+            title: 'Account suspended',
+            message:
+                'Your rider account has been suspended. Please contact 24Boda support.',
           );
           ref.read(authNotifierProvider.notifier).resetError();
         }
