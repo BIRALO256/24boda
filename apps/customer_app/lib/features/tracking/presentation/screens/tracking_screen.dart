@@ -283,7 +283,7 @@ class _RiderInfoLoader extends ConsumerWidget {
 
     return riderProfileAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (profile) {
         if (profile == null) return const SizedBox.shrink();
         return RiderInfoCard(rider: profile, shipment: shipment);
