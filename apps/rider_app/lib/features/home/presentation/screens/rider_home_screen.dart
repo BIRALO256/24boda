@@ -7,6 +7,8 @@ import 'package:rider_app/features/auth/presentation/providers/auth_notifier.dar
 import 'package:rider_app/features/home/presentation/providers/online_status_provider.dart';
 import 'package:rider_app/features/home/presentation/widgets/online_toggle_button.dart';
 import 'package:rider_app/features/home/presentation/widgets/rider_map_view.dart';
+import 'package:rider_app/features/jobs/presentation/providers/job_request_provider.dart';
+import 'package:rider_app/features/jobs/presentation/widgets/job_request_modal.dart';
 
 /// Rider home screen — the operational hub of the rider app.
 ///
@@ -32,16 +34,58 @@ import 'package:rider_app/features/home/presentation/widgets/rider_map_view.dart
 /// Shows today's earnings at a glance. Riders are motivated by
 /// visible progress — showing earnings in real time increases
 /// the time they stay online (operant conditioning, B.F. Skinner).
-class RiderHomeScreen extends ConsumerWidget {
+class RiderHomeScreen extends ConsumerStatefulWidget {
   const RiderHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RiderHomeScreen> createState() => _RiderHomeScreenState();
+}
+
+class _RiderHomeScreenState extends ConsumerState<RiderHomeScreen> {
+  bool _isModalShowing = false;
+
+  @override
+  Widget build(BuildContext context) {
     final isOnline = ref.watch(onlineStatusProvider);
     final user = ref.watch(currentUserProvider);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+    // Listen for incoming job requests — only when online
+    ref.listen(pendingJobProvider, (_, next) {
+      next.whenData((shipment) {
+        if (shipment == null || _isModalShowing || !isOnline) return;
+
+        // Reset any previous job request state
+        ref.read(jobRequestProvider.notifier).reset();
+
+        _isModalShowing = true;
+        showModalBottomSheet(
+          context: context,
+          isDismissible: false,
+          enableDrag: false,
+          backgroundColor: Colors.transparent,
+          builder: (_) => JobRequestModal(shipment: shipment),
+        ).whenComplete(() {
+          _isModalShowing = false;
+        });
+      });
+    });
+
+    // Navigate to active delivery when rider accepts
+    ref.listen(jobRequestProvider, (_, next) {
+      if (next is JobRequestAccepted) {
+        // TODO: navigate to active delivery screen in Step 4
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Job accepted! Active delivery screen coming in Step 4.',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    });
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(      value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
@@ -104,7 +148,7 @@ class RiderHomeScreen extends ConsumerWidget {
                     children: [
                       // Earnings card — only when online
                       if (isOnline) ...[
-                        _EarningsCard(),
+                        const _EarningsCard(),
                         const SizedBox(height: AppSpacing.md),
                       ],
 
@@ -219,6 +263,8 @@ class _RiderAvatar extends StatelessWidget {
 /// Today's earnings card — shown only when online.
 /// Visible progress motivates riders to stay online longer.
 class _EarningsCard extends ConsumerWidget {
+  const _EarningsCard();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(

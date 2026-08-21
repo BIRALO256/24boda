@@ -58,12 +58,10 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     // 4. First time login — create the Firestore document
-    if (profile == null) {
-      profile = await _datasource.createUserProfile(
+    profile ??= await _datasource.createUserProfile(
         uid: firebaseUser.uid,
         phone: firebaseUser.phoneNumber ?? '',
       );
-    }
 
     return profile;
   }
