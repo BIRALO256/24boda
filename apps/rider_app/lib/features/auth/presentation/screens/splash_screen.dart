@@ -59,16 +59,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _waitForAuthResolved() async {
-    const timeout = Duration(seconds: 5);
-    const checkInterval = Duration(milliseconds: 100);
+    const timeout = Duration(seconds: 8);
+    const checkInterval = Duration(milliseconds: 150);
     var elapsed = Duration.zero;
 
     while (elapsed < timeout) {
-      final authState = ref.read(authNotifierProvider).valueOrNull;
+      // Wait until the AsyncNotifier build() completes (not loading anymore)
+      // AND the resulting state is not AuthInitial
+      final asyncValue = ref.read(authNotifierProvider);
+
+      // Still loading — build() hasn't completed yet
+      if (asyncValue.isLoading) {
+        await Future.delayed(checkInterval);
+        elapsed += checkInterval;
+        continue;
+      }
+
+      // build() completed — check the resulting state
+      final authState = asyncValue.valueOrNull;
       if (authState != null && authState is! AuthInitial) return;
+
       await Future.delayed(checkInterval);
       elapsed += checkInterval;
     }
+    // Timeout — navigate anyway
   }
 
   @override
