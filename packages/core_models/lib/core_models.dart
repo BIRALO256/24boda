@@ -35,8 +35,13 @@ export 'src/contracts/contract_parsing.dart';
 export 'src/value_objects/location.dart';
 export 'src/value_objects/geo_coordinate.dart';
 export 'src/value_objects/money.dart';
+export 'src/value_objects/delivery_snapshots.dart';
 
 // Entities
 export 'src/entities/user_profile.dart';
 export 'src/entities/rider.dart';
 export 'src/entities/shipment.dart';
+export 'src/entities/platform_user.dart';
+export 'src/entities/rider_contracts.dart';
+export 'src/entities/delivery_contracts.dart';
+export 'src/entities/financial_contracts.dart';
