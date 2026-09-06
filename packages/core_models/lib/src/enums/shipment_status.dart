@@ -66,43 +66,43 @@ enum ShipmentStatus {
 
   /// Human-readable label shown in the UI.
   String get label => switch (this) {
-        ShipmentStatus.pending => 'Pending',
-        ShipmentStatus.searching => 'Finding Rider',
-        ShipmentStatus.accepted => 'Rider Assigned',
-        ShipmentStatus.enRoutePickup => 'Rider On The Way',
-        ShipmentStatus.pickedUp => 'Package Picked Up',
-        ShipmentStatus.inTransit => 'In Transit',
-        ShipmentStatus.delivered => 'Delivered',
-        ShipmentStatus.cancelled => 'Cancelled',
-        ShipmentStatus.failed => 'Delivery Failed',
-      };
+    ShipmentStatus.pending => 'Pending',
+    ShipmentStatus.searching => 'Finding Rider',
+    ShipmentStatus.accepted => 'Rider Assigned',
+    ShipmentStatus.enRoutePickup => 'Rider On The Way',
+    ShipmentStatus.pickedUp => 'Package Picked Up',
+    ShipmentStatus.inTransit => 'In Transit',
+    ShipmentStatus.delivered => 'Delivered',
+    ShipmentStatus.cancelled => 'Cancelled',
+    ShipmentStatus.failed => 'Delivery Failed',
+  };
 
   /// Firestore-safe string value for serialisation.
   /// Never use [name] directly for Firestore — it couples your
   /// database to Dart enum naming conventions.
   String get value => switch (this) {
-        ShipmentStatus.pending => 'pending',
-        ShipmentStatus.searching => 'searching',
-        ShipmentStatus.accepted => 'accepted',
-        ShipmentStatus.enRoutePickup => 'en_route_pickup',
-        ShipmentStatus.pickedUp => 'picked_up',
-        ShipmentStatus.inTransit => 'in_transit',
-        ShipmentStatus.delivered => 'delivered',
-        ShipmentStatus.cancelled => 'cancelled',
-        ShipmentStatus.failed => 'failed',
-      };
+    ShipmentStatus.pending => 'pending',
+    ShipmentStatus.searching => 'searching',
+    ShipmentStatus.accepted => 'accepted',
+    ShipmentStatus.enRoutePickup => 'en_route_pickup',
+    ShipmentStatus.pickedUp => 'picked_up',
+    ShipmentStatus.inTransit => 'in_transit',
+    ShipmentStatus.delivered => 'delivered',
+    ShipmentStatus.cancelled => 'cancelled',
+    ShipmentStatus.failed => 'failed',
+  };
 
   /// Deserialise from Firestore string value.
   static ShipmentStatus fromValue(String value) => switch (value) {
-        'pending' => ShipmentStatus.pending,
-        'searching' => ShipmentStatus.searching,
-        'accepted' => ShipmentStatus.accepted,
-        'en_route_pickup' => ShipmentStatus.enRoutePickup,
-        'picked_up' => ShipmentStatus.pickedUp,
-        'in_transit' => ShipmentStatus.inTransit,
-        'delivered' => ShipmentStatus.delivered,
-        'cancelled' => ShipmentStatus.cancelled,
-        'failed' => ShipmentStatus.failed,
-        _ => throw ArgumentError('Unknown ShipmentStatus value: $value'),
-      };
+    'pending' => ShipmentStatus.pending,
+    'searching' => ShipmentStatus.searching,
+    'accepted' => ShipmentStatus.accepted,
+    'en_route_pickup' => ShipmentStatus.enRoutePickup,
+    'picked_up' => ShipmentStatus.pickedUp,
+    'in_transit' => ShipmentStatus.inTransit,
+    'delivered' => ShipmentStatus.delivered,
+    'cancelled' => ShipmentStatus.cancelled,
+    'failed' => ShipmentStatus.failed,
+    _ => throw ArgumentError('Unknown ShipmentStatus value: $value'),
+  };
 }

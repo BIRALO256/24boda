@@ -27,8 +27,14 @@ export 'src/enums/shipment_status.dart';
 export 'src/enums/user_role.dart';
 export 'src/enums/vehicle_type.dart';
 
+// Canonical platform contract
+export 'src/contracts/contract_enums.dart';
+export 'src/contracts/contract_parsing.dart';
+
 // Value objects
 export 'src/value_objects/location.dart';
+export 'src/value_objects/geo_coordinate.dart';
+export 'src/value_objects/money.dart';
 
 // Entities
 export 'src/entities/user_profile.dart';
