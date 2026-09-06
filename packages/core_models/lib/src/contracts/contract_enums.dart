@@ -1,5 +1,6 @@
 /// Lifecycle of an account across all 24Boda clients.
 enum AccountStatus {
+  pendingOnboarding('pending_onboarding'),
   active('active'),
   suspended('suspended'),
   closed('closed');
@@ -149,5 +150,37 @@ enum EventActorRole {
   static EventActorRole fromValue(String value) => values.firstWhere(
     (item) => item.value == value,
     orElse: () => throw FormatException('Unknown actor role: $value'),
+  );
+}
+
+enum PaymentProcessingStatus {
+  created('created'),
+  pendingCustomerAction('pending_customer_action'),
+  processing('processing'),
+  succeeded('succeeded'),
+  failed('failed'),
+  partiallyRefunded('partially_refunded'),
+  refunded('refunded');
+
+  const PaymentProcessingStatus(this.value);
+  final String value;
+
+  static PaymentProcessingStatus fromValue(String value) => values.firstWhere(
+    (item) => item.value == value,
+    orElse: () =>
+        throw FormatException('Unknown payment processing status: $value'),
+  );
+}
+
+enum LedgerDirection {
+  debit('debit'),
+  credit('credit');
+
+  const LedgerDirection(this.value);
+  final String value;
+
+  static LedgerDirection fromValue(String value) => values.firstWhere(
+    (item) => item.value == value,
+    orElse: () => throw FormatException('Unknown ledger direction: $value'),
   );
 }

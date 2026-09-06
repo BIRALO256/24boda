@@ -29,14 +29,17 @@ void main() {
   });
 
   group('GeoCoordinate', () {
-    test('reads canonical and legacy coordinate keys', () {
+    test('reads canonical coordinate keys', () {
       expect(
         GeoCoordinate.fromMap({'latitude': 0.3476, 'longitude': 32.5825}),
         GeoCoordinate(latitude: 0.3476, longitude: 32.5825),
       );
+    });
+
+    test('rejects legacy coordinate keys', () {
       expect(
-        GeoCoordinate.fromMap({'lat': 0.3476, 'lng': 32.5825}),
-        GeoCoordinate(latitude: 0.3476, longitude: 32.5825),
+        () => GeoCoordinate.fromMap({'lat': 0.3476, 'lng': 32.5825}),
+        throwsFormatException,
       );
     });
 
@@ -49,12 +52,22 @@ void main() {
   });
 
   group('ContractParsing', () {
-    test('reads canonical DateTime and legacy ISO timestamp', () {
+    test('reads canonical DateTime timestamps', () {
       final date = DateTime.utc(2026, 9, 6, 12);
       expect(ContractParsing.dateTime(date, 'createdAt'), date);
+    });
+
+    test('rejects ISO string timestamps', () {
       expect(
-        ContractParsing.dateTime(date.toIso8601String(), 'createdAt'),
-        date,
+        () => ContractParsing.dateTime('2026-09-06T12:00:00.000Z', 'createdAt'),
+        throwsFormatException,
+      );
+    });
+
+    test('requires a schema version', () {
+      expect(
+        () => ContractParsing.schemaVersion(<String, dynamic>{}),
+        throwsFormatException,
       );
     });
 
@@ -125,6 +138,131 @@ void main() {
           minimum: 0,
         ),
         12500,
+      );
+
+      final shipment = DeliveryShipment.fromMap(canonicalShipmentFixture);
+      expect(shipment.price.customerTotalUgx, 12500);
+      expect(shipment.pickup.coordinate.latitude, 0.3136);
+      expect(
+        DeliveryShipment.fromMap(shipment.toMap()).status,
+        shipment.status,
+      );
+    });
+
+    test('canonical identity and rider application round-trip', () {
+      final user = PlatformUser.fromMap(canonicalUserFixture);
+      expect(user.phoneE164, '+256700000001');
+      expect(PlatformUser.fromMap(user.toMap()).status, AccountStatus.active);
+
+      final application = RiderApplication.fromMap(
+        canonicalRiderApplicationFixture,
+      );
+      expect(application.status, RiderApplicationStatus.pendingVerification);
+      expect(
+        RiderApplication.fromMap(application.toMap()).phoneE164,
+        application.phoneE164,
+      );
+    });
+
+    test('canonical identity rejects legacy aliases', () {
+      final legacyUser = Map<String, Object?>.from(canonicalUserFixture)
+        ..remove('uid')
+        ..['id'] = 'customer_legacy';
+
+      expect(() => PlatformUser.fromMap(legacyUser), throwsFormatException);
+    });
+  });
+
+  group('Operational contracts', () {
+    test('shipment offers and events round-trip', () {
+      final offeredAt = DateTime.utc(2026, 9, 6, 10);
+      final offer = ShipmentOffer.fromMap({
+        'id': 'offer_01',
+        'shipmentId': 'shipment_01',
+        'riderId': 'rider_01',
+        'status': 'pending',
+        'distanceToPickupMeters': 1250,
+        'offeredAt': offeredAt,
+        'expiresAt': offeredAt.add(const Duration(seconds: 20)),
+        'respondedAt': null,
+        'schemaVersion': 1,
+      });
+      expect(
+        ShipmentOffer.fromMap(offer.toMap()).status,
+        ShipmentOfferStatus.pending,
+      );
+
+      final event = ShipmentEvent.fromMap({
+        'id': 'event_01',
+        'type': 'shipment_offer_sent',
+        'fromStatus': 'searching',
+        'toStatus': 'offered',
+        'actorId': null,
+        'actorRole': 'system',
+        'reasonCode': null,
+        'location': null,
+        'metadata': {'dispatchVersion': 1},
+        'occurredAt': offeredAt,
+        'schemaVersion': 1,
+      });
+      expect(
+        ShipmentEvent.fromMap(event.toMap()).actorRole,
+        EventActorRole.system,
+      );
+    });
+
+    test('payment and ledger records preserve integer UGX', () {
+      final now = DateTime.utc(2026, 9, 6, 11);
+      final payment = PaymentRecord.fromMap({
+        'id': 'payment_01',
+        'shipmentId': 'shipment_01',
+        'customerId': 'customer_01',
+        'amountUgx': 12500,
+        'currency': 'UGX',
+        'method': 'mobile_money',
+        'status': 'processing',
+        'idempotencyKey': 'payment:shipment_01:attempt_01',
+        'providerReference': null,
+        'createdAt': now,
+        'updatedAt': now,
+        'schemaVersion': 1,
+      });
+      expect(PaymentRecord.fromMap(payment.toMap()).amountUgx, 12500);
+
+      final entry = LedgerEntry.fromMap({
+        'id': 'entry_01',
+        'accountId': 'rider_01',
+        'shipmentId': 'shipment_01',
+        'paymentId': 'payment_01',
+        'type': 'rider_earning',
+        'direction': 'credit',
+        'amountUgx': 10000,
+        'currency': 'UGX',
+        'idempotencyKey': 'ledger:shipment_01:rider_earning',
+        'occurredAt': now,
+        'schemaVersion': 1,
+      });
+      expect(
+        LedgerEntry.fromMap(entry.toMap()).direction,
+        LedgerDirection.credit,
+      );
+    });
+
+    test('financial records reject invalid money data', () {
+      expect(
+        () => PaymentRecord.fromMap({
+          'id': 'payment_01',
+          'shipmentId': 'shipment_01',
+          'customerId': 'customer_01',
+          'amountUgx': 12.5,
+          'currency': 'UGX',
+          'method': 'cash',
+          'status': 'created',
+          'idempotencyKey': 'key',
+          'createdAt': DateTime.now(),
+          'updatedAt': DateTime.now(),
+        }),
+        throwsFormatException,
       );
     });
   });

@@ -1,4 +1,4 @@
-const canonicalUserFixture = <String, Object?>{
+final canonicalUserFixture = <String, Object?>{
   'uid': 'customer_01HXYZ',
   'role': 'customer',
   'phoneE164': '+256700000001',
@@ -6,26 +6,70 @@ const canonicalUserFixture = <String, Object?>{
   'displayName': 'Demo Customer',
   'profilePhotoPath': null,
   'status': 'active',
-  'createdAt': '2026-09-06T09:00:00.000Z',
-  'updatedAt': '2026-09-06T09:00:00.000Z',
+  'createdAt': DateTime.utc(2026, 9, 6, 9),
+  'updatedAt': DateTime.utc(2026, 9, 6, 9),
   'schemaVersion': 1,
 };
 
-const canonicalShipmentFixture = <String, Object?>{
+final canonicalShipmentFixture = <String, Object?>{
+  'id': 'shipment_01HXYZ',
   'publicCode': 'BODA-2026-000001',
   'customerId': 'customer_01HXYZ',
   'assignedRiderId': null,
   'status': 'searching',
+  'pickup': {
+    'address': 'Kampala Road, Kampala',
+    'coordinate': {'latitude': 0.3136, 'longitude': 32.5811},
+    'placeId': 'pickup_place',
+    'contactName': 'Demo Customer',
+    'contactPhoneE164': '+256700000001',
+  },
+  'dropoff': {
+    'address': 'Ntinda, Kampala',
+    'coordinate': {'latitude': 0.3547, 'longitude': 32.6128},
+    'placeId': 'dropoff_place',
+    'contactName': 'Demo Recipient',
+    'contactPhoneE164': '+256700000002',
+  },
+  'package': {
+    'size': 'small',
+    'description': 'Documents',
+    'photoPath': null,
+    'customerNote': 'Call on arrival',
+  },
   'quoteId': 'quote_01HXYZ',
   'price': {
+    'subtotalUgx': 12500,
+    'discountUgx': 0,
     'customerTotalUgx': 12500,
     'riderEarningUgx': 10000,
     'platformCommissionUgx': 2500,
+    'taxUgx': 0,
+    'surgeBasisPoints': 10000,
     'currency': 'UGX',
   },
   'paymentStatus': 'unpaid',
   'paymentMethod': 'cash',
-  'createdAt': '2026-09-06T09:00:00.000Z',
-  'updatedAt': '2026-09-06T09:00:00.000Z',
+  'createdAt': DateTime.utc(2026, 9, 6, 9),
+  'updatedAt': DateTime.utc(2026, 9, 6, 9),
+  'schemaVersion': 1,
+};
+
+final canonicalRiderApplicationFixture = <String, Object?>{
+  'id': 'application_01HXYZ',
+  'phoneE164': '+256700000003',
+  'displayName': 'Demo Rider',
+  'vehicleType': 'boda',
+  'plateNumber': 'UAA 123A',
+  'documentPaths': {'nationalIdFront': 'rider-applications/app/id-front.jpg'},
+  'status': 'pending_verification',
+  'linkedUid': null,
+  'createdByAdminId': 'admin_01HXYZ',
+  'reviewedByAdminId': null,
+  'rejectionCode': null,
+  'createdAt': DateTime.utc(2026, 9, 6, 9),
+  'verifiedAt': null,
+  'reviewedAt': null,
+  'updatedAt': DateTime.utc(2026, 9, 6, 9),
   'schemaVersion': 1,
 };

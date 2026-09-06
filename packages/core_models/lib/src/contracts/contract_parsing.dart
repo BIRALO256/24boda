@@ -46,23 +46,10 @@ abstract final class ContractParsing {
     return value;
   }
 
-  /// Reads DateTime, a legacy ISO-8601 string, or a Firestore-like object
-  /// exposing `toDate()`. Legacy strings are read only during migration.
+  /// Reads the Firebase-independent timestamp representation produced by the
+  /// infrastructure adapter.
   static DateTime dateTime(Object? value, String field) {
     if (value is DateTime) return value.toUtc();
-    if (value is String) {
-      final parsed = DateTime.tryParse(value);
-      if (parsed != null) return parsed.toUtc();
-    }
-    if (value != null) {
-      try {
-        final dynamic timestamp = value;
-        final converted = timestamp.toDate();
-        if (converted is DateTime) return converted.toUtc();
-      } on Object {
-        // Converted into one stable format error below.
-      }
-    }
     throw FormatException('$field must be a timestamp');
   }
 
@@ -70,11 +57,7 @@ abstract final class ContractParsing {
       value == null ? null : dateTime(value, field);
 
   static int schemaVersion(Map<String, dynamic> map) {
-    final version = integer(
-      map['schemaVersion'] ?? currentSchemaVersion,
-      'schemaVersion',
-      minimum: 1,
-    );
+    final version = integer(map['schemaVersion'], 'schemaVersion', minimum: 1);
     if (version > currentSchemaVersion) {
       throw FormatException('Unsupported schema version: $version');
     }

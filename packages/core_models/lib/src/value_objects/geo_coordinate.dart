@@ -23,14 +23,8 @@ final class GeoCoordinate {
   final double longitude;
 
   factory GeoCoordinate.fromMap(Map<String, dynamic> map) => GeoCoordinate(
-    latitude: ContractParsing.decimal(
-      map['latitude'] ?? map['lat'],
-      'latitude',
-    ),
-    longitude: ContractParsing.decimal(
-      map['longitude'] ?? map['lng'],
-      'longitude',
-    ),
+    latitude: ContractParsing.decimal(map['latitude'], 'latitude'),
+    longitude: ContractParsing.decimal(map['longitude'], 'longitude'),
   );
 
   Map<String, dynamic> toMap() => {
