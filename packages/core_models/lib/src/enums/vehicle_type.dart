@@ -14,23 +14,23 @@ enum VehicleType {
 
   /// Human-readable label shown in the UI.
   String get label => switch (this) {
-        VehicleType.boda => 'Boda Boda',
-        VehicleType.bicycle => 'Bicycle',
-        VehicleType.car => 'Car',
-      };
+    VehicleType.boda => 'Boda Boda',
+    VehicleType.bicycle => 'Bicycle',
+    VehicleType.car => 'Car',
+  };
 
   /// Firestore-safe string value for serialisation.
   String get value => switch (this) {
-        VehicleType.boda => 'boda',
-        VehicleType.bicycle => 'bicycle',
-        VehicleType.car => 'car',
-      };
+    VehicleType.boda => 'boda',
+    VehicleType.bicycle => 'bicycle',
+    VehicleType.car => 'car',
+  };
 
   /// Deserialise from Firestore string value.
   static VehicleType fromValue(String value) => switch (value) {
-        'boda' => VehicleType.boda,
-        'bicycle' => VehicleType.bicycle,
-        'car' => VehicleType.car,
-        _ => throw ArgumentError('Unknown VehicleType value: $value'),
-      };
+    'boda' => VehicleType.boda,
+    'bicycle' => VehicleType.bicycle,
+    'car' => VehicleType.car,
+    _ => throw ArgumentError('Unknown VehicleType value: $value'),
+  };
 }

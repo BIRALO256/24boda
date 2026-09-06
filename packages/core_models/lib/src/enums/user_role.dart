@@ -14,16 +14,16 @@ enum UserRole {
 
   /// Firestore-safe string value for serialisation.
   String get value => switch (this) {
-        UserRole.customer => 'customer',
-        UserRole.rider => 'rider',
-        UserRole.admin => 'admin',
-      };
+    UserRole.customer => 'customer',
+    UserRole.rider => 'rider',
+    UserRole.admin => 'admin',
+  };
 
   /// Deserialise from Firestore string value.
   static UserRole fromValue(String value) => switch (value) {
-        'customer' => UserRole.customer,
-        'rider' => UserRole.rider,
-        'admin' => UserRole.admin,
-        _ => throw ArgumentError('Unknown UserRole value: $value'),
-      };
+    'customer' => UserRole.customer,
+    'rider' => UserRole.rider,
+    'admin' => UserRole.admin,
+    _ => throw ArgumentError('Unknown UserRole value: $value'),
+  };
 }

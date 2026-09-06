@@ -67,20 +67,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
-  /// Polls auth state every 100ms until it resolves from AuthInitial.
-  /// Safety timeout of 5 seconds prevents infinite splash.
   Future<void> _waitForAuthResolved() async {
-    const timeout = Duration(seconds: 5);
-    const checkInterval = Duration(milliseconds: 100);
+    const timeout = Duration(seconds: 8);
+    const checkInterval = Duration(milliseconds: 150);
     var elapsed = Duration.zero;
 
     while (elapsed < timeout) {
-      final authState = ref.read(authNotifierProvider).valueOrNull;
+      final asyncValue = ref.read(authNotifierProvider);
+
+      if (asyncValue.isLoading) {
+        await Future.delayed(checkInterval);
+        elapsed += checkInterval;
+        continue;
+      }
+
+      final authState = asyncValue.valueOrNull;
       if (authState != null && authState is! AuthInitial) return;
+
       await Future.delayed(checkInterval);
       elapsed += checkInterval;
     }
-    // Timeout reached — navigate anyway
   }
 
   @override

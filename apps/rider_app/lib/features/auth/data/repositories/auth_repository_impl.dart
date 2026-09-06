@@ -63,6 +63,22 @@ class AuthRepositoryImpl implements AuthRepository {
     if (firebaseUser == null) return null;
 
     final profile = await _datasource.getUserProfile(firebaseUser.uid);
+
+    // Debug — remove before production
+    if (profile == null) {
+      // ignore: avoid_print
+      print('DEBUG: No Firestore profile found for UID: ${firebaseUser.uid}');
+    } else if (!profile.isRider) {
+      // ignore: avoid_print
+      print('DEBUG: Profile found but role is ${profile.role.value}, not rider');
+    } else if (!profile.isActive) {
+      // ignore: avoid_print
+      print('DEBUG: Rider profile found but isActive is false');
+    } else {
+      // ignore: avoid_print
+      print('DEBUG: Valid rider profile found for ${profile.name}');
+    }
+
     if (profile == null || !profile.isRider || !profile.isActive) {
       await _datasource.signOut();
       return null;
