@@ -29,14 +29,17 @@ void main() {
   });
 
   group('GeoCoordinate', () {
-    test('reads canonical and legacy coordinate keys', () {
+    test('reads canonical coordinate keys', () {
       expect(
         GeoCoordinate.fromMap({'latitude': 0.3476, 'longitude': 32.5825}),
         GeoCoordinate(latitude: 0.3476, longitude: 32.5825),
       );
+    });
+
+    test('rejects legacy coordinate keys', () {
       expect(
-        GeoCoordinate.fromMap({'lat': 0.3476, 'lng': 32.5825}),
-        GeoCoordinate(latitude: 0.3476, longitude: 32.5825),
+        () => GeoCoordinate.fromMap({'lat': 0.3476, 'lng': 32.5825}),
+        throwsFormatException,
       );
     });
 
@@ -49,12 +52,22 @@ void main() {
   });
 
   group('ContractParsing', () {
-    test('reads canonical DateTime and legacy ISO timestamp', () {
+    test('reads canonical DateTime timestamps', () {
       final date = DateTime.utc(2026, 9, 6, 12);
       expect(ContractParsing.dateTime(date, 'createdAt'), date);
+    });
+
+    test('rejects ISO string timestamps', () {
       expect(
-        ContractParsing.dateTime(date.toIso8601String(), 'createdAt'),
-        date,
+        () => ContractParsing.dateTime('2026-09-06T12:00:00.000Z', 'createdAt'),
+        throwsFormatException,
+      );
+    });
+
+    test('requires a schema version', () {
+      expect(
+        () => ContractParsing.schemaVersion(<String, dynamic>{}),
+        throwsFormatException,
       );
     });
 
@@ -149,6 +162,14 @@ void main() {
         RiderApplication.fromMap(application.toMap()).phoneE164,
         application.phoneE164,
       );
+    });
+
+    test('canonical identity rejects legacy aliases', () {
+      final legacyUser = Map<String, Object?>.from(canonicalUserFixture)
+        ..remove('uid')
+        ..['id'] = 'customer_legacy';
+
+      expect(() => PlatformUser.fromMap(legacyUser), throwsFormatException);
     });
   });
 

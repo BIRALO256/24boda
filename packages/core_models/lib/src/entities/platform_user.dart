@@ -37,29 +37,22 @@ final class PlatformUser {
   final int schemaVersion;
 
   factory PlatformUser.fromMap(Map<String, dynamic> map) => PlatformUser(
-    uid: ContractParsing.string(map['uid'] ?? map['id'], 'uid'),
+    uid: ContractParsing.string(map['uid'], 'uid'),
     role: UserRole.fromValue(ContractParsing.string(map['role'], 'role')),
-    phoneE164: ContractParsing.optionalString(
-      map['phoneE164'] ?? map['phone'],
-      'phoneE164',
-    ),
+    phoneE164: ContractParsing.optionalString(map['phoneE164'], 'phoneE164'),
     email: ContractParsing.optionalString(map['email'], 'email'),
     displayName: ContractParsing.string(
-      map['displayName'] ?? map['name'],
+      map['displayName'],
       'displayName',
       allowEmpty: true,
     ),
     profilePhotoPath: ContractParsing.optionalString(
-      map['profilePhotoPath'] ?? map['profilePhotoUrl'],
+      map['profilePhotoPath'],
       'profilePhotoPath',
     ),
-    status: map['status'] != null
-        ? AccountStatus.fromValue(
-            ContractParsing.string(map['status'], 'status'),
-          )
-        : ContractParsing.boolean(map['isActive'], 'isActive')
-        ? AccountStatus.active
-        : AccountStatus.suspended,
+    status: AccountStatus.fromValue(
+      ContractParsing.string(map['status'], 'status'),
+    ),
     createdAt: ContractParsing.dateTime(map['createdAt'], 'createdAt'),
     updatedAt: ContractParsing.dateTime(map['updatedAt'], 'updatedAt'),
     schemaVersion: ContractParsing.schemaVersion(map),

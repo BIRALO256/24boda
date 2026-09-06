@@ -144,7 +144,7 @@ final class RiderProfile {
   final int schemaVersion;
 
   factory RiderProfile.fromMap(Map<String, dynamic> map) => RiderProfile(
-    uid: ContractParsing.string(map['uid'] ?? map['id'], 'uid'),
+    uid: ContractParsing.string(map['uid'], 'uid'),
     applicationId: ContractParsing.string(
       map['applicationId'],
       'applicationId',

@@ -1,4 +1,4 @@
-const canonicalUserFixture = <String, Object?>{
+final canonicalUserFixture = <String, Object?>{
   'uid': 'customer_01HXYZ',
   'role': 'customer',
   'phoneE164': '+256700000001',
@@ -6,12 +6,12 @@ const canonicalUserFixture = <String, Object?>{
   'displayName': 'Demo Customer',
   'profilePhotoPath': null,
   'status': 'active',
-  'createdAt': '2026-09-06T09:00:00.000Z',
-  'updatedAt': '2026-09-06T09:00:00.000Z',
+  'createdAt': DateTime.utc(2026, 9, 6, 9),
+  'updatedAt': DateTime.utc(2026, 9, 6, 9),
   'schemaVersion': 1,
 };
 
-const canonicalShipmentFixture = <String, Object?>{
+final canonicalShipmentFixture = <String, Object?>{
   'id': 'shipment_01HXYZ',
   'publicCode': 'BODA-2026-000001',
   'customerId': 'customer_01HXYZ',
@@ -50,12 +50,12 @@ const canonicalShipmentFixture = <String, Object?>{
   },
   'paymentStatus': 'unpaid',
   'paymentMethod': 'cash',
-  'createdAt': '2026-09-06T09:00:00.000Z',
-  'updatedAt': '2026-09-06T09:00:00.000Z',
+  'createdAt': DateTime.utc(2026, 9, 6, 9),
+  'updatedAt': DateTime.utc(2026, 9, 6, 9),
   'schemaVersion': 1,
 };
 
-const canonicalRiderApplicationFixture = <String, Object?>{
+final canonicalRiderApplicationFixture = <String, Object?>{
   'id': 'application_01HXYZ',
   'phoneE164': '+256700000003',
   'displayName': 'Demo Rider',
@@ -67,9 +67,9 @@ const canonicalRiderApplicationFixture = <String, Object?>{
   'createdByAdminId': 'admin_01HXYZ',
   'reviewedByAdminId': null,
   'rejectionCode': null,
-  'createdAt': '2026-09-06T09:00:00.000Z',
+  'createdAt': DateTime.utc(2026, 9, 6, 9),
   'verifiedAt': null,
   'reviewedAt': null,
-  'updatedAt': '2026-09-06T09:00:00.000Z',
+  'updatedAt': DateTime.utc(2026, 9, 6, 9),
   'schemaVersion': 1,
 };

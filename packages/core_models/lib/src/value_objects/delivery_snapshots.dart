@@ -22,7 +22,7 @@ final class LocationSnapshot {
       LocationSnapshot(
         address: ContractParsing.string(map['address'], 'address'),
         coordinate: GeoCoordinate.fromMap(
-          ContractParsing.map(map['coordinate'] ?? map, 'coordinate'),
+          ContractParsing.map(map['coordinate'], 'coordinate'),
         ),
         placeId: ContractParsing.optionalString(map['placeId'], 'placeId'),
         contactName: ContractParsing.optionalString(
@@ -30,7 +30,7 @@ final class LocationSnapshot {
           'contactName',
         ),
         contactPhoneE164: ContractParsing.optionalString(
-          map['contactPhoneE164'] ?? map['contactPhone'],
+          map['contactPhoneE164'],
           'contactPhoneE164',
         ),
       );
