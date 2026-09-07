@@ -50,7 +50,5 @@ final locationDatasourceProvider = Provider<LocationDatasource>((ref) {
 /// Exposes [LocationRepositoryImpl] as [LocationRepository] so all
 /// consumers depend on the interface, not the implementation.
 final locationRepositoryProvider = Provider<LocationRepository>((ref) {
-  return LocationRepositoryImpl(
-    ref.watch(locationDatasourceProvider),
-  );
+  return LocationRepositoryImpl(ref.watch(locationDatasourceProvider));
 });

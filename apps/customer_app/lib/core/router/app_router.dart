@@ -101,17 +101,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Splash — initial loading screen
       GoRoute(
         path: Routes.splash,
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SplashScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: SplashScreen()),
       ),
 
       // Phone number entry
       GoRoute(
         path: Routes.phone,
-        pageBuilder: (context, state) => const MaterialPage(
-          child: PhoneScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            const MaterialPage(child: PhoneScreen()),
       ),
 
       // OTP verification
@@ -121,8 +119,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           final extra = state.extra as Map<String, dynamic>?;
           final verificationId =
               extra?[RouteParams.verificationId] as String? ?? '';
-          final phoneNumber =
-              extra?[RouteParams.phoneNumber] as String? ?? '';
+          final phoneNumber = extra?[RouteParams.phoneNumber] as String? ?? '';
           return MaterialPage(
             child: OtpScreen(
               verificationId: verificationId,
@@ -135,9 +132,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Home — real home screen with Google Maps
       GoRoute(
         path: Routes.home,
-        pageBuilder: (context, state) => const MaterialPage(
-          child: HomeScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            const MaterialPage(child: HomeScreen()),
       ),
     ],
   );
@@ -163,10 +159,7 @@ class _RouterRefreshNotifier extends ChangeNotifier {
 /// Extension on [BuildContext] for cleaner navigation to OTP screen.
 /// Usage: context.goToOtp(verificationId: id, phoneNumber: phone)
 extension AuthNavigation on BuildContext {
-  void goToOtp({
-    required String verificationId,
-    required String phoneNumber,
-  }) {
+  void goToOtp({required String verificationId, required String phoneNumber}) {
     go(
       Routes.otp,
       extra: {

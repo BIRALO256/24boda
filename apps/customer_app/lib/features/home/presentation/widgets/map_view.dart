@@ -26,7 +26,8 @@ class _MapViewState extends ConsumerState<MapView> {
 
   Future<void> _checkLocationPermission() async {
     final permission = await Geolocator.checkPermission();
-    final granted = permission == LocationPermission.always ||
+    final granted =
+        permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
     if (mounted) {
       setState(() => _locationPermissionGranted = granted);
@@ -40,8 +41,7 @@ class _MapViewState extends ConsumerState<MapView> {
 
     // Re-check permission after location fetches — by then the
     // geolocator has already requested and the user may have granted it
-    ref.listen<AsyncValue<LocationState>>(locationNotifierProvider,
-        (_, next) {
+    ref.listen<AsyncValue<LocationState>>(locationNotifierProvider, (_, next) {
       next.whenData((state) {
         if (state is LocationLoaded && !_locationPermissionGranted) {
           _checkLocationPermission();
@@ -92,11 +92,10 @@ class MyLocationButton extends ConsumerWidget {
       onTap: () async {
         final locationState = ref.read(locationNotifierProvider).valueOrNull;
         if (locationState is LocationLoaded) {
-          await ref.read(mapNotifierProvider.notifier).animateTo(
-                LatLng(
-                  locationState.location.lat,
-                  locationState.location.lng,
-                ),
+          await ref
+              .read(mapNotifierProvider.notifier)
+              .animateTo(
+                LatLng(locationState.location.lat, locationState.location.lng),
               );
         } else {
           await ref

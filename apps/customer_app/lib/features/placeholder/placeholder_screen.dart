@@ -17,19 +17,14 @@ import 'package:theme/theme.dart';
 /// - Font should look clean and geometric (DM Sans)
 /// - Background should be pure white
 class PlaceholderScreen extends StatelessWidget {
-  const PlaceholderScreen({
-    super.key,
-    required this.appName,
-  });
+  const PlaceholderScreen({super.key, required this.appName});
 
   final String appName;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appName),
-      ),
+      appBar: AppBar(title: Text(appName)),
       body: SingleChildScrollView(
         padding: AppSpacing.screenPadding,
         child: Column(
@@ -72,10 +67,7 @@ class PlaceholderScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxxl),
 
             // Primary button — verifies AppTheme button styling
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text('App is ready'),
-            ),
+            ElevatedButton(onPressed: () {}, child: const Text('App is ready')),
 
             const SizedBox(height: AppSpacing.md),
 
@@ -109,10 +101,7 @@ class PlaceholderScreen extends StatelessWidget {
 
 /// Small color swatch widget for visual theme verification.
 class _ColorSwatch extends StatelessWidget {
-  const _ColorSwatch({
-    required this.color,
-    required this.label,
-  });
+  const _ColorSwatch({required this.color, required this.label});
 
   final Color color;
   final String label;
@@ -130,10 +119,7 @@ class _ColorSwatch extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
       ],
     );
   }

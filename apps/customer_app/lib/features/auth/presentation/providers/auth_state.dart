@@ -6,7 +6,7 @@ import 'package:core_models/core_models.dart';
 /// switch/pattern match covers all cases. No runtime surprises.
 ///
 /// Why a sealed class over an enum?
-/// Some states carry data (e.g. [AuthAuthenticated] carries a [UserProfile],
+/// Some states carry data (e.g. [AuthAuthenticated] carries a [PlatformUser],
 /// [AuthError] carries a message). Enums can't carry typed data.
 /// Sealed classes give us type-safe data + exhaustive matching.
 ///
@@ -50,10 +50,7 @@ final class AuthOtpSending extends AuthState {
 /// [verificationId] is needed to verify the code.
 /// [phoneNumber] is displayed masked on the OTP screen.
 final class AuthOtpSent extends AuthState {
-  const AuthOtpSent({
-    required this.verificationId,
-    required this.phoneNumber,
-  });
+  const AuthOtpSent({required this.verificationId, required this.phoneNumber});
 
   final String verificationId;
   final String phoneNumber;
@@ -66,11 +63,11 @@ final class AuthVerifying extends AuthState {
 }
 
 /// User is authenticated. Navigate to the home screen.
-/// [user] contains the full [UserProfile] loaded from Firestore.
+/// [user] contains the full [PlatformUser] loaded from Firestore.
 final class AuthAuthenticated extends AuthState {
   const AuthAuthenticated({required this.user});
 
-  final UserProfile user;
+  final PlatformUser user;
 }
 
 /// Something went wrong. Show an error message.

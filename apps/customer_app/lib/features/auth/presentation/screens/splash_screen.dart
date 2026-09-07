@@ -43,8 +43,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
 
     _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(
-          parent: _animationController, curve: Curves.easeOutBack),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
 
     _animationController.forward();

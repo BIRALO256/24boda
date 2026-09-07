@@ -12,19 +12,16 @@ import 'package:theme/theme.dart';
 /// all screens. Duplicating it means two things to maintain —
 /// they will inevitably drift apart over time. One widget = one truth.
 class ShipmentStepIndicator extends StatelessWidget {
-  const ShipmentStepIndicator({
-    super.key,
-    required this.currentStep,
-  });
+  const ShipmentStepIndicator({super.key, required this.currentStep});
 
   final int currentStep;
   static const int totalSteps = 3;
 
   String get _stepLabel => switch (currentStep) {
-        1 => 'Address',
-        2 => 'Details',
-        _ => 'Price',
-      };
+    1 => 'Address',
+    2 => 'Details',
+    _ => 'Price',
+  };
 
   @override
   Widget build(BuildContext context) {

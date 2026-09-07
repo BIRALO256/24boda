@@ -12,10 +12,7 @@ import 'package:theme/theme.dart';
 /// full map, zero distraction. The primary action (where to deliver)
 /// is in the bottom sheet where the thumb naturally rests.
 class HomeTopBar extends StatelessWidget {
-  const HomeTopBar({
-    super.key,
-    required this.onMenuTap,
-  });
+  const HomeTopBar({super.key, required this.onMenuTap});
 
   final VoidCallback onMenuTap;
 
@@ -23,10 +20,7 @@ class HomeTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.only(
-          left: AppSpacing.md,
-          top: AppSpacing.sm,
-        ),
+        padding: const EdgeInsets.only(left: AppSpacing.md, top: AppSpacing.sm),
         child: _MenuButton(onTap: onMenuTap),
       ),
     );

@@ -73,9 +73,7 @@ class LocationDatasource {
     }
 
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 
@@ -169,7 +167,8 @@ class LocationDatasource {
 
       if (parts.isEmpty) {
         // Last fallback — use thoroughfare or admin area
-        final fallback = place.thoroughfare ??
+        final fallback =
+            place.thoroughfare ??
             place.subAdministrativeArea ??
             place.administrativeArea;
         if (fallback != null && fallback.isNotEmpty) return fallback;

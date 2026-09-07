@@ -96,10 +96,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   }
 
   Future<void> _onOtpCompleted(String otp) async {
-    await ref.read(authNotifierProvider.notifier).verifyOtp(
-          verificationId: widget.verificationId,
-          otpCode: otp,
-        );
+    await ref
+        .read(authNotifierProvider.notifier)
+        .verifyOtp(verificationId: widget.verificationId, otpCode: otp);
   }
 
   Future<void> _onResend() async {
@@ -113,7 +112,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     try {
       final e164 = PhoneValidator.toE164(phone);
       if (e164.length < 8) return phone;
-      final start = e164.substring(0, 6);   // +256 7
+      final start = e164.substring(0, 6); // +256 7
       final end = e164.substring(e164.length - 3); // 456
       return '$start** *** $end';
     } catch (_) {
@@ -186,10 +185,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               const SizedBox(height: AppSpacing.lg),
 
               // Headline — tells user what to do physically, not technically
-              Text(
-                'Check your messages',
-                style: AppTypography.headlineLarge,
-              ),
+              Text('Check your messages', style: AppTypography.headlineLarge),
 
               const SizedBox(height: AppSpacing.xs),
 
@@ -224,9 +220,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               // Loading indicator during verification
               if (isVerifying) ...[
                 const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
@@ -255,7 +249,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                             children: [
                               const TextSpan(
                                 text: 'Didn\'t get it? ',
-                                style: TextStyle(color: AppColors.textSecondary),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                               TextSpan(
                                 text: 'Resend',

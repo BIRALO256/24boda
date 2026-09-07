@@ -1,8 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:theme/theme.dart';
-import 'package:utils/utils.dart';
 
 import 'package:customer_app/features/auth/presentation/providers/auth_notifier.dart';
 
@@ -70,13 +68,9 @@ class _NameCollectionSheetState extends ConsumerState<NameCollectionSheet> {
     try {
       // Update the name in Firestore directly
       // This is a simple field update — no use case needed for a one-liner
-      await FirebaseFirestore.instance
-          .collection(FirestoreCollections.users)
-          .doc(user.id)
-          .update({
-        UserFields.name: name,
-        UserFields.updatedAt: DateTime.now().toIso8601String(),
-      });
+      await ref
+          .read(authNotifierProvider.notifier)
+          .completeCustomerOnboarding(name);
 
       // Dismiss the sheet — the app continues with the name saved
       if (mounted) Navigator.of(context).pop();

@@ -6,7 +6,7 @@ import 'package:customer_app/features/auth/data/repositories/auth_repository_imp
 
 /// Use case: Verify the OTP entered by the user.
 ///
-/// On success, returns the authenticated [UserProfile].
+/// On success, returns the authenticated [PlatformUser].
 /// On failure, throws an [AuthException] with a user-friendly message.
 class VerifyOtp {
   const VerifyOtp(this._repository);
@@ -17,7 +17,7 @@ class VerifyOtp {
   ///
   /// [verificationId] — received from [SendOtp] via onCodeSent callback
   /// [otpCode] — 6-digit code entered by the user
-  Future<UserProfile> call({
+  Future<PlatformUser> call({
     required String verificationId,
     required String otpCode,
   }) async {

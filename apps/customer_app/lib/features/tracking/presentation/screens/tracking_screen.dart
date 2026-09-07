@@ -90,8 +90,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final shipmentAsync = ref.watch(shipmentStreamProvider(widget.shipmentId));
-    final riderLocationAsync =
-        ref.watch(riderLocationProvider(widget.riderId));
+    final riderLocationAsync = ref.watch(riderLocationProvider(widget.riderId));
 
     // React to shipment status changes
     ref.listen(shipmentStreamProvider(widget.shipmentId), (_, next) {
@@ -115,9 +114,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
         ),
       ),
       error: (error, _) => Scaffold(
-        body: Center(
-          child: Text('Could not load tracking info. $error'),
-        ),
+        body: Center(child: Text('Could not load tracking info. $error')),
       ),
       data: (shipment) {
         // Build map markers
@@ -127,7 +124,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
         final riderLocation = riderLocationAsync.valueOrNull;
         if (riderLocation != null) {
           final riderLatLng = LatLng(riderLocation.lat, riderLocation.lng);
-          final destination = shipment.status == ShipmentStatus.enRoutePickup ||
+          final destination =
+              shipment.status == ShipmentStatus.enRoutePickup ||
                   shipment.status == ShipmentStatus.accepted
               ? LatLng(shipment.pickup.lat, shipment.pickup.lng)
               : LatLng(shipment.dropoff.lat, shipment.dropoff.lng);
@@ -146,10 +144,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
               Positioned.fill(
                 child: GoogleMap(
                   initialCameraPosition: CameraPosition(
-                    target: LatLng(
-                      shipment.pickup.lat,
-                      shipment.pickup.lng,
-                    ),
+                    target: LatLng(shipment.pickup.lat, shipment.pickup.lng),
                     zoom: 14,
                   ),
                   onMapCreated: _onMapCreated,
@@ -174,8 +169,9 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                       children: [
                         // Back to home
                         GestureDetector(
-                          onTap: () => Navigator.of(context)
-                              .popUntil((route) => route.isFirst),
+                          onTap: () => Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst),
                           child: Container(
                             width: 44,
                             height: 44,
@@ -228,36 +224,43 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
     final markers = <Marker>{};
 
     // Pickup pin — orange
-    markers.add(Marker(
-      markerId: const MarkerId('pickup'),
-      position: LatLng(shipment.pickup.lat, shipment.pickup.lng),
-      icon: BitmapDescriptor.defaultMarkerWithHue(
-        BitmapDescriptor.hueOrange,
+    markers.add(
+      Marker(
+        markerId: const MarkerId('pickup'),
+        position: LatLng(shipment.pickup.lat, shipment.pickup.lng),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        infoWindow: InfoWindow(
+          title: 'Pickup',
+          snippet: shipment.pickup.address,
+        ),
       ),
-      infoWindow: InfoWindow(title: 'Pickup', snippet: shipment.pickup.address),
-    ));
+    );
 
     // Dropoff pin — dark red
-    markers.add(Marker(
-      markerId: const MarkerId('dropoff'),
-      position: LatLng(shipment.dropoff.lat, shipment.dropoff.lng),
-      icon: BitmapDescriptor.defaultMarkerWithHue(
-        BitmapDescriptor.hueRed,
+    markers.add(
+      Marker(
+        markerId: const MarkerId('dropoff'),
+        position: LatLng(shipment.dropoff.lat, shipment.dropoff.lng),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(
+          title: 'Dropoff',
+          snippet: shipment.dropoff.address,
+        ),
       ),
-      infoWindow:
-          InfoWindow(title: 'Dropoff', snippet: shipment.dropoff.address),
-    ));
+    );
 
     // Rider pin — moves in real time
     if (riderLocation != null) {
-      markers.add(Marker(
-        markerId: const MarkerId('rider'),
-        position: LatLng(riderLocation.lat, riderLocation.lng),
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueAzure,
+      markers.add(
+        Marker(
+          markerId: const MarkerId('rider'),
+          position: LatLng(riderLocation.lat, riderLocation.lng),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueAzure,
+          ),
+          infoWindow: const InfoWindow(title: 'Your rider'),
         ),
-        infoWindow: const InfoWindow(title: 'Your rider'),
-      ));
+      );
     }
 
     setState(() => _markers = markers);
@@ -269,10 +272,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
 /// Separated into its own widget so it has its own async boundary.
 /// The tracking map doesn't rebuild when the rider profile loads.
 class _RiderInfoLoader extends ConsumerWidget {
-  const _RiderInfoLoader({
-    required this.riderId,
-    required this.shipment,
-  });
+  const _RiderInfoLoader({required this.riderId, required this.shipment});
 
   final String riderId;
   final Shipment shipment;
@@ -293,15 +293,15 @@ class _RiderInfoLoader extends ConsumerWidget {
 }
 
 /// Fetches the rider's UserProfile from Firestore.
-final _riderProfileProvider =
-    FutureProvider.autoDispose.family<UserProfile?, String>((ref, riderId) async {
-  if (riderId.isEmpty) return null;
+final _riderProfileProvider = FutureProvider.autoDispose
+    .family<UserProfile?, String>((ref, riderId) async {
+      if (riderId.isEmpty) return null;
 
-  final doc = await FirebaseFirestore.instance
-      .collection(FirestoreCollections.users)
-      .doc(riderId)
-      .get();
+      final doc = await FirebaseFirestore.instance
+          .collection(FirestoreCollections.users)
+          .doc(riderId)
+          .get();
 
-  if (!doc.exists || doc.data() == null) return null;
-  return UserProfile.fromMap(doc.data()!);
-});
+      if (!doc.exists || doc.data() == null) return null;
+      return UserProfile.fromMap(doc.data()!);
+    });

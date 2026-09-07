@@ -72,10 +72,11 @@ class MapNotifier extends AutoDisposeNotifier<MapState> {
 }
 
 /// Provider for [MapNotifier].
-final mapNotifierProvider =
-    AutoDisposeNotifierProvider<MapNotifier, MapState>(() {
-  return MapNotifier();
-});
+final mapNotifierProvider = AutoDisposeNotifierProvider<MapNotifier, MapState>(
+  () {
+    return MapNotifier();
+  },
+);
 
 /// The set of markers shown on the map.
 /// Currently only the user's current location marker.

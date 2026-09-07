@@ -18,7 +18,7 @@ import 'package:customer_app/features/shipment/presentation/screens/delivery_det
 /// Baymard Institute: users need to see their surroundings when
 /// picking a delivery destination. A full-screen takeover removes
 /// that context and increases cognitive load.
-/// 
+///
 /// Auto-focus on open:
 /// Fitts's Law — user tapped "Where to deliver?" with clear intent.
 /// Opening the keyboard immediately removes one tap of friction.
@@ -98,19 +98,16 @@ class _AddressSearchScreenState extends ConsumerState<AddressSearchScreen> {
     );
 
     // Update shipment creation state with the chosen address
-    ref.read(shipmentCreationProvider.notifier).onAddressPicked(
-          dropoff: dropoff,
-          pickup: pickup,
-        );
+    ref
+        .read(shipmentCreationProvider.notifier)
+        .onAddressPicked(dropoff: dropoff, pickup: pickup);
 
     // Close the search sheet and push to delivery details
     if (mounted) {
       Navigator.of(context).pop();
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const DeliveryDetailsScreen(),
-        ),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const DeliveryDetailsScreen()));
     }
   }
 
@@ -125,113 +122,113 @@ class _AddressSearchScreenState extends ConsumerState<AddressSearchScreen> {
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.92,
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Drag handle ────────────────────────────────────────────────
-          const _DragHandle(),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Drag handle ────────────────────────────────────────────────
+            const _DragHandle(),
 
-          // ── Header ────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              AppSpacing.md,
-            ),
-            child: Row(
-              children: [
-                // Back button
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: AppColors.dark,
-                  ),
-                ),
-
-                const SizedBox(width: AppSpacing.md),
-
-                // Search field
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppSpacing.inputRadius,
+            // ── Header ────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  // Back button
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: AppColors.dark,
                     ),
-                    child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      textInputAction: TextInputAction.search,
-                      style: AppTypography.bodyLarge,
-                      decoration: InputDecoration(
-                        hintText: 'Search delivery address',
-                        hintStyle: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.textDisabled,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: AppColors.textSecondary,
-                          size: AppSpacing.iconMd,
-                        ),
-                        suffixIcon: searchState.query.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(
-                                  Icons.clear_rounded,
-                                  color: AppColors.textSecondary,
-                                  size: AppSpacing.iconMd,
-                                ),
-                                onPressed: () {
-                                  _controller.clear();
-                                  ref
-                                      .read(addressSearchProvider.notifier)
-                                      .clearSearch();
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.smMd,
-                        ),
+                  ),
+
+                  const SizedBox(width: AppSpacing.md),
+
+                  // Search field
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: AppSpacing.inputRadius,
                       ),
-                      onChanged: (value) {
-                        ref
-                            .read(addressSearchProvider.notifier)
-                            .onQueryChanged(value);
-                      },
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        textInputAction: TextInputAction.search,
+                        style: AppTypography.bodyLarge,
+                        decoration: InputDecoration(
+                          hintText: 'Search delivery address',
+                          hintStyle: AppTypography.bodyLarge.copyWith(
+                            color: AppColors.textDisabled,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: AppColors.textSecondary,
+                            size: AppSpacing.iconMd,
+                          ),
+                          suffixIcon: searchState.query.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    Icons.clear_rounded,
+                                    color: AppColors.textSecondary,
+                                    size: AppSpacing.iconMd,
+                                  ),
+                                  onPressed: () {
+                                    _controller.clear();
+                                    ref
+                                        .read(addressSearchProvider.notifier)
+                                        .clearSearch();
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: false,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.smMd,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          ref
+                              .read(addressSearchProvider.notifier)
+                              .onQueryChanged(value);
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          const Divider(height: 1),
+            const Divider(height: 1),
 
-          // ── Results list ──────────────────────────────────────────────
-          Expanded(
-            child: searchState.query.isEmpty
-                ? _RecentAndCurrentLocation(
-                    locationState: locationState,
-                    onCurrentLocationTap: () {
-                      if (locationState is LocationLoaded) {
-                        Navigator.of(context).pop(locationState.location);
-                      }
-                    },
-                  )
-                : searchState.isLoading
-                    ? const _LoadingIndicator()
-                    : searchState.suggestions.isEmpty
-                        ? _NoResults(query: searchState.query)
-                        : _SuggestionsList(
-                            suggestions: searchState.suggestions,
-                            onTap: _onSuggestionTapped,
-                          ),
-          ),
-        ],
+            // ── Results list ──────────────────────────────────────────────
+            Expanded(
+              child: searchState.query.isEmpty
+                  ? _RecentAndCurrentLocation(
+                      locationState: locationState,
+                      onCurrentLocationTap: () {
+                        if (locationState is LocationLoaded) {
+                          Navigator.of(context).pop(locationState.location);
+                        }
+                      },
+                    )
+                  : searchState.isLoading
+                  ? const _LoadingIndicator()
+                  : searchState.suggestions.isEmpty
+                  ? _NoResults(query: searchState.query)
+                  : _SuggestionsList(
+                      suggestions: searchState.suggestions,
+                      onTap: _onSuggestionTapped,
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -292,10 +289,7 @@ class _RecentAndCurrentLocation extends StatelessWidget {
               size: AppSpacing.iconMd,
             ),
           ),
-          title: Text(
-            'Current location',
-            style: AppTypography.titleSmall,
-          ),
+          title: Text('Current location', style: AppTypography.titleSmall),
           subtitle: Text(
             locationState is LocationLoaded
                 ? (locationState as LocationLoaded).location.address
@@ -429,10 +423,7 @@ class _NoResults extends StatelessWidget {
 }
 
 class _SuggestionsList extends StatelessWidget {
-  const _SuggestionsList({
-    required this.suggestions,
-    required this.onTap,
-  });
+  const _SuggestionsList({required this.suggestions, required this.onTap});
 
   final List<PlaceSuggestion> suggestions;
   final void Function(PlaceSuggestion) onTap;
@@ -442,8 +433,7 @@ class _SuggestionsList extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: suggestions.length,
-      separatorBuilder: (_, index) =>
-          const Divider(height: 1, indent: 64),
+      separatorBuilder: (_, index) => const Divider(height: 1, indent: 64),
       itemBuilder: (_, index) {
         final suggestion = suggestions[index];
         return _SuggestionTile(
@@ -459,10 +449,7 @@ class _SuggestionsList extends StatelessWidget {
 /// Main text is bold — matches the Baymard research finding that
 /// bolding the matched portion speeds up scanning by 40%.
 class _SuggestionTile extends StatelessWidget {
-  const _SuggestionTile({
-    required this.suggestion,
-    required this.onTap,
-  });
+  const _SuggestionTile({required this.suggestion, required this.onTap});
 
   final PlaceSuggestion suggestion;
   final VoidCallback onTap;

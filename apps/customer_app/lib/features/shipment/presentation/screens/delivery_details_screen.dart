@@ -46,8 +46,7 @@ class DeliveryDetailsScreen extends ConsumerStatefulWidget {
       _DeliveryDetailsScreenState();
 }
 
-class _DeliveryDetailsScreenState
-    extends ConsumerState<DeliveryDetailsScreen> {
+class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
   PackageSize? _selectedSize;
   bool _showOptionalFields = false;
   final _descriptionController = TextEditingController();
@@ -63,7 +62,9 @@ class _DeliveryDetailsScreenState
   void _onContinue() {
     if (_selectedSize == null) return;
 
-    ref.read(shipmentCreationProvider.notifier).onDetailsEntered(
+    ref
+        .read(shipmentCreationProvider.notifier)
+        .onDetailsEntered(
           packageSize: _selectedSize!,
           packageDescription: _descriptionController.text.trim().isEmpty
               ? null
@@ -73,9 +74,9 @@ class _DeliveryDetailsScreenState
               : _noteController.text.trim(),
         );
 
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PriceEstimateScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const PriceEstimateScreen()));
   }
 
   @override
@@ -134,17 +135,19 @@ class _DeliveryDetailsScreenState
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: PackageSize.values
-                            .map((size) => Padding(
-                                  padding: const EdgeInsets.only(
-                                    right: AppSpacing.sm,
-                                  ),
-                                  child: _SizeCard(
-                                    size: size,
-                                    isSelected: _selectedSize == size,
-                                    onTap: () =>
-                                        setState(() => _selectedSize = size),
-                                  ),
-                                ))
+                            .map(
+                              (size) => Padding(
+                                padding: const EdgeInsets.only(
+                                  right: AppSpacing.sm,
+                                ),
+                                child: _SizeCard(
+                                  size: size,
+                                  isSelected: _selectedSize == size,
+                                  onTap: () =>
+                                      setState(() => _selectedSize = size),
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
@@ -281,11 +284,11 @@ class _SizeCard extends StatelessWidget {
   final VoidCallback onTap;
 
   IconData get _icon => switch (size) {
-        PackageSize.small => Icons.mail_rounded,
-        PackageSize.medium => Icons.inventory_2_rounded,
-        PackageSize.large => Icons.luggage_rounded,
-        PackageSize.fragile => Icons.local_shipping_rounded,
-      };
+    PackageSize.small => Icons.mail_rounded,
+    PackageSize.medium => Icons.inventory_2_rounded,
+    PackageSize.large => Icons.luggage_rounded,
+    PackageSize.fragile => Icons.local_shipping_rounded,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -310,9 +313,7 @@ class _SizeCard extends StatelessWidget {
             Icon(
               _icon,
               size: 32,
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
             ),
             const SizedBox(height: AppSpacing.xs),
             // Label — short, bold when selected
@@ -320,8 +321,7 @@ class _SizeCard extends StatelessWidget {
               size.label,
               style: AppTypography.labelMedium.copyWith(
                 color: isSelected ? AppColors.primary : AppColors.dark,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),

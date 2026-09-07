@@ -29,10 +29,7 @@ class ShipmentCreationNotifier
 
   // ── Screen 1: Address picked ─────────────────────────────────────────────
 
-  void onAddressPicked({
-    required Location dropoff,
-    required Location pickup,
-  }) {
+  void onAddressPicked({required Location dropoff, required Location pickup}) {
     final distanceKm = DistanceFormatter.haversineKm(
       pickup.lat,
       pickup.lng,
@@ -89,8 +86,10 @@ class ShipmentCreationNotifier
     state = const ShipmentCreationSubmitting();
 
     try {
-      final shipment = await ref.read(createShipmentProvider).call(
-            customerId: user.id,
+      final shipment = await ref
+          .read(createShipmentProvider)
+          .call(
+            customerId: user.uid,
             pickup: current.pickup,
             dropoff: current.dropoff,
             packageSize: current.packageSize.value,
@@ -119,21 +118,24 @@ class ShipmentCreationNotifier
     _shipmentSubscription = ref
         .read(watchShipmentProvider)
         .call(shipmentId)
-        .listen((shipment) {
-      if (shipment.status == ShipmentStatus.accepted ||
-          shipment.status.isActive) {
-        state = ShipmentCreationAccepted(shipment: shipment);
-        _shipmentSubscription?.cancel();
-      } else if (shipment.status == ShipmentStatus.cancelled) {
-        state = const ShipmentCreationError(
-          message: 'No riders found. Please try again.',
+        .listen(
+          (shipment) {
+            if (shipment.status == ShipmentStatus.accepted ||
+                shipment.status.isActive) {
+              state = ShipmentCreationAccepted(shipment: shipment);
+              _shipmentSubscription?.cancel();
+            } else if (shipment.status == ShipmentStatus.cancelled) {
+              state = const ShipmentCreationError(
+                message: 'No riders found. Please try again.',
+              );
+            }
+          },
+          onError: (_) {
+            state = const ShipmentCreationError(
+              message: 'Connection lost. Please check your network.',
+            );
+          },
         );
-      }
-    }, onError: (_) {
-      state = const ShipmentCreationError(
-        message: 'Connection lost. Please check your network.',
-      );
-    });
   }
 
   // ── Reset ────────────────────────────────────────────────────────────────
@@ -144,7 +146,10 @@ class ShipmentCreationNotifier
   }
 }
 
-final shipmentCreationProvider = AutoDisposeNotifierProvider<
-    ShipmentCreationNotifier, ShipmentCreationState>(() {
-  return ShipmentCreationNotifier();
-});
+final shipmentCreationProvider =
+    AutoDisposeNotifierProvider<
+      ShipmentCreationNotifier,
+      ShipmentCreationState
+    >(() {
+      return ShipmentCreationNotifier();
+    });

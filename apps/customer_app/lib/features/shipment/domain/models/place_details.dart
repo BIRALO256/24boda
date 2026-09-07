@@ -15,10 +15,9 @@ class PlaceDetails {
   final String formattedAddress;
   final String name;
 
-  /// The display address — prefer name for short places, 
+  /// The display address — prefer name for short places,
   /// formatted_address for full street addresses.
-  String get displayAddress =>
-      name.isNotEmpty ? name : formattedAddress;
+  String get displayAddress => name.isNotEmpty ? name : formattedAddress;
 
   factory PlaceDetails.fromJson(Map<String, dynamic> json) {
     final geometry = json['geometry'] as Map<String, dynamic>? ?? {};
