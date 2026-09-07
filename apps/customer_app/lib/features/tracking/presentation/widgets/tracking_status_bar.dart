@@ -13,10 +13,7 @@ import 'package:theme/theme.dart';
 /// Informational content belongs at the top where eyes go first
 /// when looking for context. (F-pattern reading, Nielsen Norman)
 class TrackingStatusBar extends StatelessWidget {
-  const TrackingStatusBar({
-    super.key,
-    required this.status,
-  });
+  const TrackingStatusBar({super.key, required this.status});
 
   final ShipmentStatus status;
 
@@ -58,40 +55,40 @@ class TrackingStatusBar extends StatelessWidget {
   _StatusConfig _statusConfig(ShipmentStatus status) {
     return switch (status) {
       ShipmentStatus.accepted || ShipmentStatus.enRoutePickup => _StatusConfig(
-            icon: Icons.two_wheeler_rounded,
-            iconColor: AppColors.primary,
-            textColor: AppColors.primary,
-            backgroundColor: AppColors.primarySurface,
-            borderColor: AppColors.primary,
-          ),
+        icon: Icons.two_wheeler_rounded,
+        iconColor: AppColors.primary,
+        textColor: AppColors.primary,
+        backgroundColor: AppColors.primarySurface,
+        borderColor: AppColors.primary,
+      ),
       ShipmentStatus.pickedUp => _StatusConfig(
-            icon: Icons.inventory_2_rounded,
-            iconColor: AppColors.info,
-            textColor: AppColors.info,
-            backgroundColor: AppColors.infoSurface,
-            borderColor: AppColors.info,
-          ),
+        icon: Icons.inventory_2_rounded,
+        iconColor: AppColors.info,
+        textColor: AppColors.info,
+        backgroundColor: AppColors.infoSurface,
+        borderColor: AppColors.info,
+      ),
       ShipmentStatus.inTransit => _StatusConfig(
-            icon: Icons.local_shipping_rounded,
-            iconColor: AppColors.info,
-            textColor: AppColors.info,
-            backgroundColor: AppColors.infoSurface,
-            borderColor: AppColors.info,
-          ),
+        icon: Icons.local_shipping_rounded,
+        iconColor: AppColors.info,
+        textColor: AppColors.info,
+        backgroundColor: AppColors.infoSurface,
+        borderColor: AppColors.info,
+      ),
       ShipmentStatus.delivered => _StatusConfig(
-            icon: Icons.check_circle_rounded,
-            iconColor: AppColors.success,
-            textColor: AppColors.success,
-            backgroundColor: AppColors.successSurface,
-            borderColor: AppColors.success,
-          ),
+        icon: Icons.check_circle_rounded,
+        iconColor: AppColors.success,
+        textColor: AppColors.success,
+        backgroundColor: AppColors.successSurface,
+        borderColor: AppColors.success,
+      ),
       _ => _StatusConfig(
-            icon: Icons.info_outline_rounded,
-            iconColor: AppColors.textSecondary,
-            textColor: AppColors.textSecondary,
-            backgroundColor: AppColors.surface,
-            borderColor: AppColors.divider,
-          ),
+        icon: Icons.info_outline_rounded,
+        iconColor: AppColors.textSecondary,
+        textColor: AppColors.textSecondary,
+        backgroundColor: AppColors.surface,
+        borderColor: AppColors.divider,
+      ),
     };
   }
 }

@@ -66,5 +66,5 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
 /// Provider for [LocationNotifier].
 final locationNotifierProvider =
     AutoDisposeAsyncNotifierProvider<LocationNotifier, LocationState>(() {
-  return LocationNotifier();
-});
+      return LocationNotifier();
+    });

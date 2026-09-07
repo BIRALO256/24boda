@@ -6,7 +6,7 @@ import 'package:customer_app/features/shipment/domain/repositories/shipment_repo
 
 /// Use case: Watch a shipment for real-time status changes.
 ///
-/// Returns a Stream<Shipment> that emits every time the Firestore
+/// Returns a `Stream<Shipment>` that emits every time the Firestore
 /// document changes. The searching_rider_screen and tracking_screen
 /// use this to react instantly when a rider accepts or delivers.
 class WatchShipment {
@@ -25,7 +25,7 @@ final watchShipmentProvider = Provider<WatchShipment>((ref) {
 
 /// Family provider — watch a specific shipment by ID.
 /// Usage: ref.watch(shipmentStreamProvider('shipmentId'))
-final shipmentStreamProvider =
-    StreamProvider.autoDispose.family<Shipment, String>((ref, shipmentId) {
-  return ref.watch(watchShipmentProvider).call(shipmentId);
-});
+final shipmentStreamProvider = StreamProvider.autoDispose
+    .family<Shipment, String>((ref, shipmentId) {
+      return ref.watch(watchShipmentProvider).call(shipmentId);
+    });

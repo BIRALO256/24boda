@@ -33,8 +33,7 @@ class PlaceSuggestion {
       placeId: json['place_id'] as String? ?? '',
       description: json['description'] as String? ?? '',
       mainText: structuredFormatting['main_text'] as String? ?? '',
-      secondaryText:
-          structuredFormatting['secondary_text'] as String? ?? '',
+      secondaryText: structuredFormatting['secondary_text'] as String? ?? '',
     );
   }
 }

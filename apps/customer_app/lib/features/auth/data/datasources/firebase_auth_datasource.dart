@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:core_models/core_models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_services/firebase_services.dart';
 import 'package:flutter/foundation.dart';
-import 'package:utils/utils.dart';
 
 /// All direct Firebase SDK calls for authentication live here.
 ///
@@ -28,12 +27,15 @@ import 'package:utils/utils.dart';
 class FirebaseAuthDatasource {
   FirebaseAuthDatasource({
     FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+    PlatformFirestore? firestore,
+    CustomerOnboardingService? onboardingService,
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? PlatformFirestore(),
+       _onboardingService = onboardingService ?? CustomerOnboardingService();
 
   final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  final PlatformFirestore _firestore;
+  final CustomerOnboardingService _onboardingService;
 
   /// Stores the web ConfirmationResult between sendOtp and verifyOtp calls.
   /// Only used on web — null on mobile.
@@ -146,50 +148,18 @@ class FirebaseAuthDatasource {
 
   // ── Firestore user document ───────────────────────────────────────────────
 
-  Future<UserProfile?> getUserProfile(String uid) async {
-    final doc = await _firestore
-        .collection(FirestoreCollections.users)
-        .doc(uid)
-        .get();
-
-    if (!doc.exists || doc.data() == null) return null;
-    return UserProfile.fromMap(doc.data()!);
+  Future<PlatformUser?> getUserProfile(String uid) async {
+    final doc = await _firestore.users.doc(uid).get();
+    return doc.data();
   }
 
-  Future<UserProfile> createUserProfile({
-    required String uid,
-    required String phone,
-  }) async {
-    final now = DateTime.now();
-    final profile = UserProfile(
-      id: uid,
-      phone: phone,
-      role: UserRole.customer,
-      name: '',
-      createdAt: now,
-      updatedAt: now,
-      isActive: true,
-    );
-
-    await _firestore
-        .collection(FirestoreCollections.users)
-        .doc(uid)
-        .set(profile.toMap(), SetOptions(merge: true));
-
+  Future<PlatformUser> completeCustomerOnboarding({String? displayName}) async {
+    final result = await _onboardingService.complete(displayName: displayName);
+    final profile = await getUserProfile(result.uid);
+    if (profile == null) {
+      throw StateError('Customer profile was not created');
+    }
     return profile;
-  }
-
-  Future<void> updateFcmToken({
-    required String uid,
-    required String token,
-  }) async {
-    await _firestore
-        .collection(FirestoreCollections.users)
-        .doc(uid)
-        .update({
-      UserFields.fcmToken: token,
-      UserFields.updatedAt: DateTime.now().toIso8601String(),
-    });
   }
 
   // ── Auth state ────────────────────────────────────────────────────────────
@@ -212,8 +182,7 @@ class FirebaseAuthDatasource {
         'The code you entered is incorrect. Please try again.',
       'session-expired' =>
         'Your verification code has expired. Please request a new one.',
-      'quota-exceeded' =>
-        'SMS quota exceeded. Please try again later.',
+      'quota-exceeded' => 'SMS quota exceeded. Please try again later.',
       'network-request-failed' =>
         'No internet connection. Please check your network and try again.',
       _ => 'Something went wrong. Please try again.',

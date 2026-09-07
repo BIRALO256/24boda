@@ -27,11 +27,7 @@ import 'package:utils/utils.dart';
 /// Social proof (Cialdini) — seeing the rider has a 4.8 rating
 /// reduces anxiety during the wait. "Someone good is coming."
 class RiderInfoCard extends StatelessWidget {
-  const RiderInfoCard({
-    super.key,
-    required this.rider,
-    required this.shipment,
-  });
+  const RiderInfoCard({super.key, required this.rider, required this.shipment});
 
   final UserProfile rider;
   final Shipment shipment;
@@ -81,9 +77,7 @@ class RiderInfoCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    rider.name.isNotEmpty
-                        ? rider.name[0].toUpperCase()
-                        : '?',
+                    rider.name.isNotEmpty ? rider.name[0].toUpperCase() : '?',
                     style: AppTypography.titleLarge.copyWith(
                       color: AppColors.background,
                     ),
@@ -111,10 +105,7 @@ class RiderInfoCard extends StatelessWidget {
                           color: AppColors.textSecondary,
                         ),
                         const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          'Boda Boda',
-                          style: AppTypography.bodyMedium,
-                        ),
+                        Text('Boda Boda', style: AppTypography.bodyMedium),
                       ],
                     ),
                   ],
@@ -162,17 +153,13 @@ class RiderInfoCard extends StatelessWidget {
                 width: 1,
                 height: 40,
                 color: AppColors.divider,
-                margin: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                ),
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               ),
               Expanded(
                 child: _SummaryItem(
                   icon: Icons.payments_outlined,
                   label: 'Delivery fee',
-                  value: CurrencyFormatter.format(
-                    shipment.price.effectiveFee,
-                  ),
+                  value: CurrencyFormatter.format(shipment.price.effectiveFee),
                 ),
               ),
             ],

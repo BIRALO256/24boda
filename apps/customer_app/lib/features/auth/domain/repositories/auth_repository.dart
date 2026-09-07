@@ -38,26 +38,30 @@ abstract interface class AuthRepository {
   /// On success:
   /// - Firebase Auth signs the user in
   /// - If first time user, creates [users/{uid}] document in Firestore
-  /// - Returns the [UserProfile] of the authenticated user
+  /// - Returns the [PlatformUser] of the authenticated user
   ///
   /// On failure, throws an [AuthException].
-  Future<UserProfile> verifyOtp({
+  Future<PlatformUser> verifyOtp({
     required String verificationId,
     required String otpCode,
   });
 
   /// Returns the currently authenticated user's profile,
   /// or null if not authenticated.
-  Future<UserProfile?> getCurrentUser();
+  Future<PlatformUser?> getCurrentUser();
+
+  Future<PlatformUser> completeCustomerOnboarding({
+    required String displayName,
+  });
 
   /// Stream of auth state changes.
   ///
-  /// Emits [UserProfile] when user logs in.
+  /// Emits [PlatformUser] when user logs in.
   /// Emits null when user logs out or is not authenticated.
   ///
   /// The go_router auth guard and [AuthNotifier] both listen to this
   /// stream to reactively update the UI when auth state changes.
-  Stream<UserProfile?> get authStateChanges;
+  Stream<PlatformUser?> get authStateChanges;
 
   /// Signs out the current user.
   Future<void> signOut();

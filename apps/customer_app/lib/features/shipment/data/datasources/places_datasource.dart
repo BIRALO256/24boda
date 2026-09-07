@@ -47,9 +47,7 @@ class PlacesDatasource {
   /// Biased toward Uganda (location: Kampala, radius: 100km).
   /// This ensures results are relevant to Uganda users — typing
   /// "Kampala Road" returns Kampala results, not roads in other countries.
-  Future<List<PlaceSuggestion>> getAutocompleteSuggestions(
-    String query,
-  ) async {
+  Future<List<PlaceSuggestion>> getAutocompleteSuggestions(String query) async {
     if (query.isEmpty) return [];
 
     // On web, the Places REST API is blocked by CORS from localhost/browser.
@@ -61,15 +59,17 @@ class PlacesDatasource {
     if (kIsWeb) return [];
 
     try {
-      final uri = Uri.parse(_autocompleteUrl).replace(queryParameters: {
-        'input': query,
-        'key': _apiKey,
-        'components': 'country:ug',
-        'location': '0.3476,32.5825',
-        'radius': '100000',
-        'language': 'en',
-        'types': 'geocode|establishment',
-      });
+      final uri = Uri.parse(_autocompleteUrl).replace(
+        queryParameters: {
+          'input': query,
+          'key': _apiKey,
+          'components': 'country:ug',
+          'location': '0.3476,32.5825',
+          'radius': '100000',
+          'language': 'en',
+          'types': 'geocode|establishment',
+        },
+      );
 
       final response = await _client.get(uri);
       if (response.statusCode != 200) return [];
@@ -90,12 +90,14 @@ class PlacesDatasource {
   /// for a given place ID from autocomplete.
   Future<PlaceDetails?> getPlaceDetails(String placeId) async {
     try {
-      final uri = Uri.parse(_detailsUrl).replace(queryParameters: {
-        'place_id': placeId,
-        'key': _apiKey,
-        'fields': 'geometry,formatted_address,name',
-        'language': 'en',
-      });
+      final uri = Uri.parse(_detailsUrl).replace(
+        queryParameters: {
+          'place_id': placeId,
+          'key': _apiKey,
+          'fields': 'geometry,formatted_address,name',
+          'language': 'en',
+        },
+      );
 
       final response = await _client.get(uri);
 

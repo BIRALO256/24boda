@@ -71,12 +71,8 @@ class AddressSearchNotifier extends AutoDisposeNotifier<AddressSearchState> {
 
   Future<void> _fetchSuggestions(String query) async {
     try {
-      final suggestions =
-          await _datasource.getAutocompleteSuggestions(query);
-      state = state.copyWith(
-        suggestions: suggestions,
-        isLoading: false,
-      );
+      final suggestions = await _datasource.getAutocompleteSuggestions(query);
+      state = state.copyWith(suggestions: suggestions, isLoading: false);
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
@@ -93,8 +89,8 @@ class AddressSearchNotifier extends AutoDisposeNotifier<AddressSearchState> {
 
 final addressSearchProvider =
     AutoDisposeNotifierProvider<AddressSearchNotifier, AddressSearchState>(
-  () => AddressSearchNotifier(),
-);
+      () => AddressSearchNotifier(),
+    );
 
 final placesDatasourceProvider = Provider.autoDispose<PlacesDatasource>(
   (ref) => PlacesDatasource(),

@@ -18,19 +18,19 @@ export 'package:customer_app/features/shipment/domain/usecases/watch_shipment.da
 /// The rider location updates every 5 seconds (frequent).
 /// Keeping them separate means the status card doesn't rebuild
 /// every 5 seconds — only when the status actually changes.
-final riderLocationProvider =
-    StreamProvider.autoDispose.family<Location?, String>((ref, riderId) {
-  if (riderId.isEmpty) return Stream.value(null);
+final riderLocationProvider = StreamProvider.autoDispose
+    .family<Location?, String>((ref, riderId) {
+      if (riderId.isEmpty) return Stream.value(null);
 
-  return FirebaseFirestore.instance
-      .collection(FirestoreCollections.riders)
-      .doc(riderId)
-      .snapshots()
-      .map((snapshot) {
-    if (!snapshot.exists || snapshot.data() == null) return null;
-    final data = snapshot.data()!;
-    final locationData = data[RiderFields.currentLocation];
-    if (locationData == null) return null;
-    return Location.fromMap(locationData as Map<String, dynamic>);
-  });
-});
+      return FirebaseFirestore.instance
+          .collection(FirestoreCollections.riders)
+          .doc(riderId)
+          .snapshots()
+          .map((snapshot) {
+            if (!snapshot.exists || snapshot.data() == null) return null;
+            final data = snapshot.data()!;
+            final locationData = data[RiderFields.currentLocation];
+            if (locationData == null) return null;
+            return Location.fromMap(locationData as Map<String, dynamic>);
+          });
+    });

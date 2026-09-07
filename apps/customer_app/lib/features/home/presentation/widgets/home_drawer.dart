@@ -25,8 +25,8 @@ class HomeDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final name = user?.name ?? '';
-    final phone = user?.phone ?? '';
+    final name = user?.displayName ?? '';
+    final phone = user?.phoneE164 ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Drawer(
@@ -73,10 +73,7 @@ class HomeDrawer extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          phone,
-                          style: AppTypography.bodyMedium,
-                        ),
+                        Text(phone, style: AppTypography.bodyMedium),
                       ],
                     ),
                   ),

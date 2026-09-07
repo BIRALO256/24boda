@@ -2,6 +2,7 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:customer_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:customer_app/features/auth/domain/usecases/complete_customer_onboarding.dart';
 import 'package:customer_app/features/auth/domain/usecases/send_otp.dart';
 import 'package:customer_app/features/auth/domain/usecases/sign_out.dart';
 import 'package:customer_app/features/auth/domain/usecases/verify_otp.dart';
@@ -26,12 +27,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   late SendOtp _sendOtp;
   late VerifyOtp _verifyOtp;
   late SignOut _signOut;
+  late CompleteCustomerOnboarding _completeCustomerOnboarding;
 
   @override
   Future<AuthState> build() async {
     _sendOtp = ref.watch(sendOtpProvider);
     _verifyOtp = ref.watch(verifyOtpProvider);
     _signOut = ref.watch(signOutProvider);
+    _completeCustomerOnboarding = ref.watch(completeCustomerOnboardingProvider);
 
     // Listen to Firebase auth state changes reactively.
     // When the user signs in or out from anywhere, this stream fires
@@ -73,10 +76,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       phoneNumber: phoneNumber,
       onCodeSent: (verificationId) {
         state = AsyncData(
-          AuthOtpSent(
-            verificationId: verificationId,
-            phoneNumber: phoneNumber,
-          ),
+          AuthOtpSent(verificationId: verificationId, phoneNumber: phoneNumber),
         );
       },
       onError: (message) {
@@ -115,6 +115,17 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = const AsyncData(AuthUnauthenticated());
   }
 
+  Future<void> completeCustomerOnboarding(String displayName) async {
+    final previous = state.valueOrNull;
+    try {
+      final user = await _completeCustomerOnboarding(displayName: displayName);
+      state = AsyncData(AuthAuthenticated(user: user));
+    } catch (_) {
+      if (previous != null) state = AsyncData(previous);
+      rethrow;
+    }
+  }
+
   /// Resets error state back to unauthenticated so the user
   /// can try again without restarting the app.
   void resetError() {
@@ -142,20 +153,19 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 ///
 /// [keepAlive: true] ensures auth state persists for the entire
 /// app lifecycle — it is never disposed while the app is running.
-final authNotifierProvider =
-    AsyncNotifierProvider<AuthNotifier, AuthState>(() {
+final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, AuthState>(() {
   return AuthNotifier();
 });
 
 /// Convenience provider that streams auth state changes from Firebase.
 /// Used by [AuthNotifier] to reactively respond to sign-in/sign-out.
-final authStateChangesProvider = StreamProvider<UserProfile?>((ref) {
+final authStateChangesProvider = StreamProvider<PlatformUser?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 });
 
 /// Convenience provider — returns the current user or null.
 /// Used in screens that need to read the user without reacting to changes.
-final currentUserProvider = Provider<UserProfile?>((ref) {
+final currentUserProvider = Provider<PlatformUser?>((ref) {
   final authState = ref.watch(authNotifierProvider).valueOrNull;
   if (authState is AuthAuthenticated) return authState.user;
   return null;

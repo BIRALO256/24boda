@@ -39,7 +39,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (!mounted) return;
     final user = ref.read(currentUserProvider);
-    if (user != null && user.name.isEmpty) {
+    if (user != null && !user.isActive) {
       _showNameCollectionSheet();
     }
   }
@@ -58,30 +58,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     // Animate camera and drop marker when GPS resolves
-    ref.listen<AsyncValue<LocationState>>(
-      locationNotifierProvider,
-      (_, next) {
-        next.whenData((state) {
-          if (state is LocationLoaded) {
-            final pos = LatLng(
-              state.location.lat,
-              state.location.lng,
-            );
-            ref.read(mapNotifierProvider.notifier).animateTo(pos);
-            ref.read(mapMarkersProvider.notifier).state = {
-              Marker(
-                markerId: const MarkerId('current_location'),
-                position: pos,
-                icon: BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueOrange,
-                ),
-                infoWindow: const InfoWindow(title: 'Your location'),
+    ref.listen<AsyncValue<LocationState>>(locationNotifierProvider, (_, next) {
+      next.whenData((state) {
+        if (state is LocationLoaded) {
+          final pos = LatLng(state.location.lat, state.location.lng);
+          ref.read(mapNotifierProvider.notifier).animateTo(pos);
+          ref.read(mapMarkersProvider.notifier).state = {
+            Marker(
+              markerId: const MarkerId('current_location'),
+              position: pos,
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueOrange,
               ),
-            };
-          }
-        });
-      },
-    );
+              infoWindow: const InfoWindow(title: 'Your location'),
+            ),
+          };
+        }
+      });
+    });
 
     return Scaffold(
       key: _scaffoldKey,
@@ -92,9 +86,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Stack(
         children: [
           // Layer 1 — full-screen map
-          const Positioned.fill(
-            child: MapView(),
-          ),
+          const Positioned.fill(child: MapView()),
 
           // Layer 2 — menu button only (top-left, SafeArea aware)
           Positioned(
@@ -113,9 +105,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             snap: true,
             snapSizes: const [0.12, 0.42, 0.85],
             builder: (context, scrollController) {
-              return DeliveryBottomSheet(
-                scrollController: scrollController,
-              );
+              return DeliveryBottomSheet(scrollController: scrollController);
             },
           ),
 

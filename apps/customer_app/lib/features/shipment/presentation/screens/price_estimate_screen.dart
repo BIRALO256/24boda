@@ -28,28 +28,28 @@ class PriceEstimateScreen extends ConsumerWidget {
     // Guard — only render when details are entered
     if (state is! ShipmentCreationDetailsEntered) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
-    final isSubmitting = ref.watch(shipmentCreationProvider)
-        is ShipmentCreationSubmitting;
+    final isSubmitting =
+        ref.watch(shipmentCreationProvider) is ShipmentCreationSubmitting;
 
     // Navigate to searching screen when shipment is created
     ref.listen<ShipmentCreationState>(shipmentCreationProvider, (_, next) {
       if (next is ShipmentCreationSearching) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => SearchingRiderScreen(
-              shipmentId: next.shipment.id,
-            ),
+            builder: (_) => SearchingRiderScreen(shipmentId: next.shipment.id),
           ),
         );
       }
       if (next is ShipmentCreationError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.message)));
       }
     });
 
@@ -129,8 +129,8 @@ class PriceEstimateScreen extends ConsumerWidget {
                     onPressed: isSubmitting
                         ? null
                         : () => ref
-                            .read(shipmentCreationProvider.notifier)
-                            .confirmBooking(),
+                              .read(shipmentCreationProvider.notifier)
+                              .confirmBooking(),
                     isLoading: isSubmitting,
                     icon: Icons.local_shipping_rounded,
                   ),
@@ -169,11 +169,7 @@ class _RouteCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: AppSpacing.smMd),
-            child: Container(
-              height: 20,
-              width: 1.5,
-              color: AppColors.divider,
-            ),
+            child: Container(height: 20, width: 1.5, color: AppColors.divider),
           ),
           _RouteRow(
             icon: Icons.location_on_rounded,
@@ -284,8 +280,10 @@ class _PriceBreakdownCard extends StatelessWidget {
           Text('Price breakdown', style: AppTypography.titleLarge),
           const SizedBox(height: AppSpacing.md),
           _PriceRow(label: 'Base rate', amount: p.baseRate),
-          _PriceRow(label: 'Distance (${DistanceFormatter.format(state.distanceKm)})',
-              amount: p.distanceCharge),
+          _PriceRow(
+            label: 'Distance (${DistanceFormatter.format(state.distanceKm)})',
+            amount: p.distanceCharge,
+          ),
           if (p.sizeSurcharge > 0)
             _PriceRow(
               label: '${state.packageSize.label} surcharge',
@@ -293,7 +291,8 @@ class _PriceBreakdownCard extends StatelessWidget {
             ),
           if (p.isSurge)
             _PriceRow(
-              label: 'Peak hour surge (${((p.surgeMultiplier - 1) * 100).round()}%)',
+              label:
+                  'Peak hour surge (${((p.surgeMultiplier - 1) * 100).round()}%)',
               amount: p.estimatedFee - (p.estimatedFee / p.surgeMultiplier),
               isHighlight: true,
             ),
@@ -354,7 +353,11 @@ class _SurgeBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.bolt_rounded, color: AppColors.warning, size: AppSpacing.iconMd),
+          const Icon(
+            Icons.bolt_rounded,
+            color: AppColors.warning,
+            size: AppSpacing.iconMd,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(

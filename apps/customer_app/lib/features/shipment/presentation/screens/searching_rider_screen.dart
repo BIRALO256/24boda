@@ -20,10 +20,7 @@ import 'package:core_models/core_models.dart';
 /// - Clear status text — user always knows what's happening
 /// - Estimated time shown — anchors expectation, reduces anxiety
 class SearchingRiderScreen extends ConsumerWidget {
-  const SearchingRiderScreen({
-    super.key,
-    required this.shipmentId,
-  });
+  const SearchingRiderScreen({super.key, required this.shipmentId});
 
   final String shipmentId;
 
@@ -143,13 +140,15 @@ class _PulsingRiderSearchState extends State<_PulsingRiderSearch>
       duration: const Duration(milliseconds: 1500),
     )..repeat();
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.4).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.4,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _opacityAnimation = Tween<double>(begin: 0.4, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _opacityAnimation = Tween<double>(
+      begin: 0.4,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override

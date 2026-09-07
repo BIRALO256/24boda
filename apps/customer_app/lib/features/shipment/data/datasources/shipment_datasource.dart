@@ -11,7 +11,7 @@ import 'package:utils/utils.dart';
 /// - The repository orchestrates logic, the datasource handles raw I/O
 class ShipmentDatasource {
   ShipmentDatasource({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 

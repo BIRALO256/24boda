@@ -101,10 +101,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
-              title: Text(
-                'Wrong app',
-                style: AppTypography.headlineSmall,
-              ),
+              title: Text('Wrong app', style: AppTypography.headlineSmall),
               content: Text(
                 'This number is registered as a rider. '
                 'Please use the 24Boda Rider app instead.',
@@ -148,7 +145,8 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: SizedBox(
-            height: MediaQuery.of(context).size.height -
+            height:
+                MediaQuery.of(context).size.height -
                 MediaQuery.of(context).padding.top -
                 MediaQuery.of(context).padding.bottom,
             child: Form(

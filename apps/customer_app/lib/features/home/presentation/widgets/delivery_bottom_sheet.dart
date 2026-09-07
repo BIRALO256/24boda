@@ -35,10 +35,7 @@ import 'package:customer_app/features/shipment/presentation/screens/address_sear
 /// Showing the current address reduces friction to zero for the first field.
 /// User only needs to fill in the destination.
 class DeliveryBottomSheet extends ConsumerWidget {
-  const DeliveryBottomSheet({
-    super.key,
-    required this.scrollController,
-  });
+  const DeliveryBottomSheet({super.key, required this.scrollController});
 
   final ScrollController scrollController;
 
@@ -78,9 +75,7 @@ class DeliveryBottomSheet extends ConsumerWidget {
           const _DragHandle(),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -267,10 +262,7 @@ class _PickupLocationTile extends StatelessWidget {
 /// Styled as a search field — communicates "tap and type your destination."
 /// Orange background on the icon differentiates it from the pickup tile above.
 class _WhereToDeliverButton extends StatelessWidget {
-  const _WhereToDeliverButton({
-    required this.onTap,
-    this.selectedAddress,
-  });
+  const _WhereToDeliverButton({required this.onTap, this.selectedAddress});
 
   final VoidCallback onTap;
   final String? selectedAddress;
@@ -312,9 +304,7 @@ class _WhereToDeliverButton extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                hasAddress
-                    ? Icons.location_on_rounded
-                    : Icons.search_rounded,
+                hasAddress ? Icons.location_on_rounded : Icons.search_rounded,
                 color: AppColors.background,
                 size: AppSpacing.iconMd,
               ),
@@ -326,9 +316,7 @@ class _WhereToDeliverButton extends StatelessWidget {
               child: Text(
                 hasAddress ? selectedAddress! : 'Where to deliver?',
                 style: AppTypography.titleSmall.copyWith(
-                  color: hasAddress
-                      ? AppColors.dark
-                      : AppColors.textSecondary,
+                  color: hasAddress ? AppColors.dark : AppColors.textSecondary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -394,7 +382,11 @@ class _PlaceholderTile extends StatelessWidget {
             color: AppColors.surface,
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, size: AppSpacing.iconMd, color: AppColors.textSecondary),
+          child: Icon(
+            icon,
+            size: AppSpacing.iconMd,
+            color: AppColors.textSecondary,
+          ),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(

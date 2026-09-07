@@ -3,6 +3,34 @@ import 'package:firebase_services/firebase_services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('CustomerOnboardingResult', () {
+    test('parses the strict callable response', () {
+      final result = CustomerOnboardingResult.fromMap({
+        'uid': 'customer_01',
+        'created': true,
+        'completed': false,
+        'schemaVersion': 1,
+      });
+
+      expect(result.uid, 'customer_01');
+      expect(result.created, isTrue);
+      expect(result.completed, isFalse);
+      expect(result.schemaVersion, 1);
+    });
+
+    test('rejects malformed callable responses', () {
+      expect(
+        () => CustomerOnboardingResult.fromMap({
+          'uid': 'customer_01',
+          'created': 'yes',
+          'completed': false,
+          'schemaVersion': 1,
+        }),
+        throwsFormatException,
+      );
+    });
+  });
+
   group('FirebaseEnvironmentConfig', () {
     test('accepts a project matching the selected environment', () {
       final config = FirebaseEnvironmentConfig(
