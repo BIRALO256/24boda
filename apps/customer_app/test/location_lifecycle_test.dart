@@ -4,11 +4,28 @@ import 'package:customer_app/features/home/domain/models/current_location.dart';
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
 import 'package:customer_app/features/home/presentation/providers/map_provider.dart';
+import 'package:customer_app/features/home/presentation/providers/pickup_selection_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
+  test('GPS remains a suggestion until the customer confirms pickup', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(container.read(pickupSelectionProvider), isNull);
+
+    final pickup = LocationSnapshot(
+      address: 'Kampala Road, Kampala',
+      coordinate: GeoCoordinate(latitude: 0.3136, longitude: 32.5811),
+      landmark: 'Main entrance',
+    );
+    container.read(pickupSelectionProvider.notifier).confirm(pickup);
+
+    expect(container.read(pickupSelectionProvider), pickup);
+  });
+
   test(
     'a camera target is retained until the map controller is ready',
     () async {

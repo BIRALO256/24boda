@@ -110,13 +110,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: const LocationStatusBanner(),
           ),
 
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 64,
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            child: const LocationStatusBanner(),
-          ),
-
           // Layer 3 — draggable bottom sheet
           DraggableScrollableSheet(
             initialChildSize: 0.42,
