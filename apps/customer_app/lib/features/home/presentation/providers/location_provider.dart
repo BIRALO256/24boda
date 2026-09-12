@@ -2,6 +2,7 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:customer_app/features/home/domain/usecases/get_current_location.dart';
+import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
 
 /// State of the location detection process.
 sealed class LocationState {
@@ -20,13 +21,25 @@ final class LocationLoading extends LocationState {
 
 /// GPS position fetched successfully.
 final class LocationLoaded extends LocationState {
-  const LocationLoaded({required this.location});
+  const LocationLoaded({required this.location, required this.accuracyMeters});
   final Location location;
+  final double accuracyMeters;
+}
+
+final class LocationLowAccuracy extends LocationState {
+  const LocationLowAccuracy({
+    required this.location,
+    required this.accuracyMeters,
+  });
+
+  final Location location;
+  final double accuracyMeters;
 }
 
 /// Location fetch failed.
 final class LocationError extends LocationState {
-  const LocationError({required this.message});
+  const LocationError({required this.reason, required this.message});
+  final LocationFailureReason reason;
   final String message;
 }
 
@@ -51,12 +64,29 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
     state = const AsyncData(LocationLoading());
 
     try {
-      final location = await ref.read(getCurrentLocationProvider).call();
-      state = AsyncData(LocationLoaded(location: location));
-    } catch (e) {
+      final result = await ref.read(getCurrentLocationProvider).call();
+      state = result.accuracyMeters > 100
+          ? AsyncData(
+              LocationLowAccuracy(
+                location: result.location,
+                accuracyMeters: result.accuracyMeters,
+              ),
+            )
+          : AsyncData(
+              LocationLoaded(
+                location: result.location,
+                accuracyMeters: result.accuracyMeters,
+              ),
+            );
+    } on LocationException catch (error) {
       state = AsyncData(
+        LocationError(reason: error.reason, message: error.message),
+      );
+    } catch (_) {
+      state = const AsyncData(
         LocationError(
-          message: e.toString().replaceFirst('LocationException: ', ''),
+          reason: LocationFailureReason.unknown,
+          message: 'Something went wrong while finding your location.',
         ),
       );
     }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -34,6 +35,7 @@ class LocationDatasource {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw const LocationException(
+        LocationFailureReason.servicesDisabled,
         'Location services are disabled. Please enable GPS in your device settings.',
       );
     }
@@ -46,6 +48,7 @@ class LocationDatasource {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         throw const LocationException(
+          LocationFailureReason.permissionDenied,
           'Location permission was denied. Please allow location access to use 24Boda.',
         );
       }
@@ -54,6 +57,7 @@ class LocationDatasource {
     // Permanently denied — user must go to settings
     if (permission == LocationPermission.deniedForever) {
       throw const LocationException(
+        LocationFailureReason.permissionDeniedForever,
         'Location permission is permanently denied. Please enable it in your app settings.',
       );
     }
@@ -64,17 +68,29 @@ class LocationDatasource {
     // GPS + WiFi + cell towers and picks the best available source.
     // No timeLimit — let it wait for the best fix rather than cutting
     // off at 10s and returning a WiFi-based inaccurate result.
-    if (kIsWeb) {
-      return Geolocator.getCurrentPosition(
+    try {
+      return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
         ),
       );
+    } on TimeoutException {
+      throw const LocationException(
+        LocationFailureReason.timeout,
+        'We could not determine your location in time. Move near a window and try again.',
+      );
+    } on LocationServiceDisabledException {
+      throw const LocationException(
+        LocationFailureReason.servicesDisabled,
+        'Location services are disabled. Please enable GPS in your device settings.',
+      );
+    } catch (_) {
+      throw const LocationException(
+        LocationFailureReason.positionUnavailable,
+        'Your location is temporarily unavailable. Please try again.',
+      );
     }
-
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
   }
 
   /// Converts lat/lng coordinates to a human-readable address string.
@@ -114,7 +130,7 @@ class LocationDatasource {
         'https://maps.googleapis.com/maps/api/geocode/json'
         '?latlng=$lat,$lng&key=$apiKey',
       );
-      final response = await http.get(url);
+      final response = await http.get(url).timeout(const Duration(seconds: 8));
       if (response.statusCode != 200) {
         return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       }
@@ -143,7 +159,9 @@ class LocationDatasource {
   /// Mobile: uses the geocoding package (native device geocoding).
   Future<String> _getAddressMobile(double lat, double lng) async {
     try {
-      final placemarks = await geo.placemarkFromCoordinates(lat, lng);
+      final placemarks = await geo
+          .placemarkFromCoordinates(lat, lng)
+          .timeout(const Duration(seconds: 8));
       if (placemarks.isEmpty) {
         return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       }

@@ -1,5 +1,7 @@
 import 'package:core_models/core_models.dart';
 
+import 'package:customer_app/features/home/domain/models/current_location.dart';
+
 /// Abstract contract for location operations.
 ///
 /// Why abstract?
@@ -16,7 +18,7 @@ abstract interface class LocationRepository {
   /// Requests location permission if not already granted.
   /// Throws a [LocationException] if permission is denied
   /// or if the device GPS is unavailable.
-  Future<Location> getCurrentLocation();
+  Future<CurrentLocation> getCurrentLocation();
 
   /// Returns a human-readable address string for the given coordinates.
   ///
@@ -26,8 +28,18 @@ abstract interface class LocationRepository {
 }
 
 /// Thrown when location operations fail.
+enum LocationFailureReason {
+  servicesDisabled,
+  permissionDenied,
+  permissionDeniedForever,
+  timeout,
+  positionUnavailable,
+  unknown,
+}
+
 class LocationException implements Exception {
-  const LocationException(this.message);
+  const LocationException(this.reason, this.message);
+  final LocationFailureReason reason;
   final String message;
 
   @override

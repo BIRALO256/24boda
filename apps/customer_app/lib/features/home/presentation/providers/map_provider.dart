@@ -17,7 +17,9 @@ sealed class MapState {
 }
 
 final class MapUninitialized extends MapState {
-  const MapUninitialized();
+  const MapUninitialized({this.pendingCamera});
+
+  final CameraPosition? pendingCamera;
 }
 
 final class MapReady extends MapState {
@@ -43,20 +45,29 @@ class MapNotifier extends AutoDisposeNotifier<MapState> {
   MapState build() => const MapUninitialized();
 
   /// Called by [MapView] when the GoogleMap widget is created.
-  void onMapCreated(GoogleMapController controller) {
+  Future<void> onMapCreated(GoogleMapController controller) async {
+    final pending = switch (state) {
+      MapUninitialized(:final pendingCamera) => pendingCamera,
+      _ => null,
+    };
     state = MapReady(controller: controller);
+    if (pending != null) {
+      await controller.animateCamera(CameraUpdate.newCameraPosition(pending));
+    }
   }
 
   /// Animates the camera to the given position.
   /// Called when the user's GPS location is fetched.
   Future<void> animateTo(LatLng position, {double zoom = kDefaultZoom}) async {
+    final camera = CameraPosition(target: position, zoom: zoom);
     final current = state;
-    if (current is! MapReady) return;
+    if (current is! MapReady) {
+      state = MapUninitialized(pendingCamera: camera);
+      return;
+    }
 
     await current.controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: position, zoom: zoom),
-      ),
+      CameraUpdate.newCameraPosition(camera),
     );
   }
 
