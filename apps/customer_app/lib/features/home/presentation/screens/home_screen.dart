@@ -10,6 +10,7 @@ import 'package:customer_app/features/home/presentation/screens/name_collection_
 import 'package:customer_app/features/home/presentation/widgets/delivery_bottom_sheet.dart';
 import 'package:customer_app/features/home/presentation/widgets/home_drawer.dart';
 import 'package:customer_app/features/home/presentation/widgets/home_top_bar.dart';
+import 'package:customer_app/features/home/presentation/widgets/location_status_banner.dart';
 import 'package:customer_app/features/home/presentation/widgets/map_view.dart';
 
 /// Customer home screen — pure orchestrator.
@@ -100,6 +101,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: HomeTopBar(
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
+          ),
+
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 64,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            child: const LocationStatusBanner(),
+          ),
+
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 64,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            child: const LocationStatusBanner(),
           ),
 
           // Layer 3 — draggable bottom sheet

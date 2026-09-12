@@ -21,6 +21,12 @@ import 'package:customer_app/features/home/domain/repositories/location_reposito
 /// On mobile, it uses the device GPS directly.
 /// Both return the same Position object — no conditional code needed here.
 class LocationDatasource {
+  Future<bool> openAppSettings() async =>
+      kIsWeb ? false : Geolocator.openAppSettings();
+
+  Future<bool> openLocationSettings() async =>
+      kIsWeb ? false : Geolocator.openLocationSettings();
+
   /// Requests location permission and returns the current position.
   ///
   /// Permission flow:

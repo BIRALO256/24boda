@@ -43,6 +43,12 @@ class LocationRepositoryImpl implements LocationRepository {
   Future<String> getAddressFromCoordinates(double lat, double lng) {
     return _datasource.getAddressFromCoordinates(lat, lng);
   }
+
+  @override
+  Future<bool> openAppSettings() => _datasource.openAppSettings();
+
+  @override
+  Future<bool> openLocationSettings() => _datasource.openLocationSettings();
 }
 
 /// Riverpod provider for [LocationDatasource].

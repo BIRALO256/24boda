@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:customer_app/features/home/domain/usecases/get_current_location.dart';
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
+import 'package:customer_app/features/home/domain/usecases/open_location_settings.dart';
 
 /// State of the location detection process.
 sealed class LocationState {
@@ -41,6 +42,12 @@ final class LocationError extends LocationState {
   const LocationError({required this.reason, required this.message});
   final LocationFailureReason reason;
   final String message;
+
+  String get actionLabel => switch (reason) {
+    LocationFailureReason.servicesDisabled => 'Enable GPS',
+    LocationFailureReason.permissionDeniedForever => 'Open settings',
+    _ => 'Try again',
+  };
 }
 
 /// Manages GPS location state for the home screen.
@@ -61,6 +68,7 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
   /// Fetches the current GPS location.
   /// Called from home_screen when it first mounts.
   Future<void> fetchCurrentLocation() async {
+    if (state.valueOrNull is LocationLoading) return;
     state = const AsyncData(LocationLoading());
 
     try {
@@ -89,6 +97,21 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
           message: 'Something went wrong while finding your location.',
         ),
       );
+    }
+  }
+
+  Future<void> recover(LocationFailureReason reason) async {
+    final settings = ref.read(openLocationSettingsProvider);
+    switch (reason) {
+      case LocationFailureReason.servicesDisabled:
+        await settings.openServices();
+        return;
+      case LocationFailureReason.permissionDeniedForever:
+        await settings.openApp();
+        return;
+      default:
+        await fetchCurrentLocation();
+        return;
     }
   }
 }

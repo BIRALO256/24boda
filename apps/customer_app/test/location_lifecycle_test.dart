@@ -88,6 +88,7 @@ void main() {
       (state as LocationError).reason,
       LocationFailureReason.permissionDeniedForever,
     );
+    expect(state.actionLabel, 'Open settings');
   });
 }
 
@@ -115,4 +116,10 @@ final class _FakeLocationRepository implements LocationRepository {
   @override
   Future<String> getAddressFromCoordinates(double lat, double lng) async =>
       _result?.location.address ?? '';
+
+  @override
+  Future<bool> openAppSettings() async => true;
+
+  @override
+  Future<bool> openLocationSettings() async => true;
 }

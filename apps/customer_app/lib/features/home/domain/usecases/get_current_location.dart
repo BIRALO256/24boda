@@ -19,6 +19,8 @@ class GetCurrentLocation {
 
   final LocationRepository _repository;
 
+  LocationRepository get repository => _repository;
+
   Future<CurrentLocation> call() => _repository.getCurrentLocation();
 }
 

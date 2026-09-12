@@ -25,6 +25,10 @@ abstract interface class LocationRepository {
   /// Uses reverse geocoding — converts lat/lng → street address.
   /// Example: (0.3476, 32.5825) → "Kampala Road, Kampala, Uganda"
   Future<String> getAddressFromCoordinates(double lat, double lng);
+
+  Future<bool> openAppSettings();
+
+  Future<bool> openLocationSettings();
 }
 
 /// Thrown when location operations fail.
