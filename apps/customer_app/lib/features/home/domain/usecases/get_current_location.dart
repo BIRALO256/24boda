@@ -2,6 +2,7 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:customer_app/features/home/data/repositories/location_repository_impl.dart';
+import 'package:customer_app/features/home/domain/models/current_location.dart';
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
 
 /// Use case: Get the device's current GPS location.
@@ -18,7 +19,7 @@ class GetCurrentLocation {
 
   final LocationRepository _repository;
 
-  Future<Location> call() => _repository.getCurrentLocation();
+  Future<CurrentLocation> call() => _repository.getCurrentLocation();
 }
 
 /// Riverpod provider for [GetCurrentLocation].

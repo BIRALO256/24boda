@@ -60,8 +60,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Animate camera and drop marker when GPS resolves
     ref.listen<AsyncValue<LocationState>>(locationNotifierProvider, (_, next) {
       next.whenData((state) {
-        if (state is LocationLoaded) {
-          final pos = LatLng(state.location.lat, state.location.lng);
+        final location = switch (state) {
+          LocationLoaded(:final location) => location,
+          LocationLowAccuracy(:final location) => location,
+          _ => null,
+        };
+        if (location != null) {
+          final pos = LatLng(location.lat, location.lng);
           ref.read(mapNotifierProvider.notifier).animateTo(pos);
           ref.read(mapMarkersProvider.notifier).state = {
             Marker(

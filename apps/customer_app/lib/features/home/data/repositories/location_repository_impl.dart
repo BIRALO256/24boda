@@ -2,6 +2,7 @@ import 'package:core_models/core_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:customer_app/features/home/data/datasources/location_datasource.dart';
+import 'package:customer_app/features/home/domain/models/current_location.dart';
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
 
 /// Concrete implementation of [LocationRepository].
@@ -19,7 +20,7 @@ class LocationRepositoryImpl implements LocationRepository {
   final LocationDatasource _datasource;
 
   @override
-  Future<Location> getCurrentLocation() async {
+  Future<CurrentLocation> getCurrentLocation() async {
     final position = await _datasource.getCurrentPosition();
 
     // Reverse geocode the coordinates to get a human-readable address
@@ -28,10 +29,13 @@ class LocationRepositoryImpl implements LocationRepository {
       position.longitude,
     );
 
-    return Location(
-      lat: position.latitude,
-      lng: position.longitude,
-      address: address,
+    return CurrentLocation(
+      location: Location(
+        lat: position.latitude,
+        lng: position.longitude,
+        address: address,
+      ),
+      accuracyMeters: position.accuracy,
     );
   }
 

@@ -1,74 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
 import 'package:customer_app/features/home/presentation/providers/map_provider.dart';
 
-/// Full-screen Google Map widget.
-class MapView extends ConsumerStatefulWidget {
+class MapView extends ConsumerWidget {
   const MapView({super.key});
 
   @override
-  ConsumerState<MapView> createState() => _MapViewState();
-}
-
-class _MapViewState extends ConsumerState<MapView> {
-  bool _locationPermissionGranted = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkLocationPermission();
-  }
-
-  Future<void> _checkLocationPermission() async {
-    final permission = await Geolocator.checkPermission();
-    final granted =
-        permission == LocationPermission.always ||
-        permission == LocationPermission.whileInUse;
-    if (mounted) {
-      setState(() => _locationPermissionGranted = granted);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final markers = ref.watch(mapMarkersProvider);
     final locationState = ref.watch(locationNotifierProvider).valueOrNull;
-
-    // Re-check permission after location fetches — by then the
-    // geolocator has already requested and the user may have granted it
-    ref.listen<AsyncValue<LocationState>>(locationNotifierProvider, (_, next) {
-      next.whenData((state) {
-        if (state is LocationLoaded && !_locationPermissionGranted) {
-          _checkLocationPermission();
-        }
-      });
-    });
-
-    // Start at Kampala until GPS resolves
-    LatLng initialTarget = kKampalaDefault;
-    if (locationState is LocationLoaded) {
-      initialTarget = LatLng(
-        locationState.location.lat,
-        locationState.location.lng,
-      );
-    }
+    final hasLocationPermission =
+        locationState is LocationLoaded || locationState is LocationLowAccuracy;
 
     return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: initialTarget,
+      initialCameraPosition: const CameraPosition(
+        target: kKampalaDefault,
         zoom: kDefaultZoom,
       ),
-      onMapCreated: (controller) {
-        ref.read(mapNotifierProvider.notifier).onMapCreated(controller);
-      },
+      onMapCreated: ref.read(mapNotifierProvider.notifier).onMapCreated,
       markers: markers,
-      // Only enable after permission granted — avoids Android error log
-      myLocationEnabled: _locationPermissionGranted,
+      myLocationEnabled: hasLocationPermission,
       myLocationButtonEnabled: false,
       mapToolbarEnabled: false,
       compassEnabled: false,
@@ -82,7 +37,6 @@ class _MapViewState extends ConsumerState<MapView> {
   }
 }
 
-/// Custom my-location FAB — sits above the bottom sheet in the thumb zone.
 class MyLocationButton extends ConsumerWidget {
   const MyLocationButton({super.key});
 
@@ -90,13 +44,16 @@ class MyLocationButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () async {
-        final locationState = ref.read(locationNotifierProvider).valueOrNull;
-        if (locationState is LocationLoaded) {
+        final state = ref.read(locationNotifierProvider).valueOrNull;
+        final location = switch (state) {
+          LocationLoaded(:final location) => location,
+          LocationLowAccuracy(:final location) => location,
+          _ => null,
+        };
+        if (location != null) {
           await ref
               .read(mapNotifierProvider.notifier)
-              .animateTo(
-                LatLng(locationState.location.lat, locationState.location.lng),
-              );
+              .animateTo(LatLng(location.lat, location.lng));
         } else {
           await ref
               .read(locationNotifierProvider.notifier)
