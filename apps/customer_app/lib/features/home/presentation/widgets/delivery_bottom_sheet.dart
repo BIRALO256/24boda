@@ -107,8 +107,16 @@ class DeliveryBottomSheet extends ConsumerWidget {
                     }
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute<LocationSnapshot>(
-                        builder: (_) =>
-                            PickupSelectionScreen(initialLocation: location),
+                        builder: (_) => PickupSelectionScreen(
+                          initialLocation: location,
+                          accuracyMeters: switch (locationState) {
+                            LocationLoaded(:final accuracyMeters) =>
+                              accuracyMeters,
+                            LocationLowAccuracy(:final accuracyMeters) =>
+                              accuracyMeters,
+                            _ => null,
+                          },
+                        ),
                       ),
                     );
                     if (result != null) {
@@ -143,15 +151,6 @@ class DeliveryBottomSheet extends ConsumerWidget {
                 ),
 
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── Recent deliveries ──────────────────────────────────────
-                // Recognition over recall (Norman) — showing past destinations
-                // means users don't have to remember or retype addresses.
-                // Only visible when sheet is expanded.
-                _SectionLabel(label: 'Recent deliveries'),
-                const SizedBox(height: AppSpacing.sm),
-
-                const _RecentDeliveriesPlaceholder(),
 
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -385,74 +384,6 @@ class _WhereToDeliverButton extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Placeholder for recent deliveries list.
-/// Replaced with real data when shipment history is built in Step 9.
-class _RecentDeliveriesPlaceholder extends StatelessWidget {
-  const _RecentDeliveriesPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _PlaceholderTile(
-          icon: Icons.access_time_rounded,
-          label: 'Owino Market',
-          sublabel: 'Kampala, Uganda',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _PlaceholderTile(
-          icon: Icons.access_time_rounded,
-          label: 'Kampala Road',
-          sublabel: 'Kampala, Uganda',
-        ),
-      ],
-    );
-  }
-}
-
-class _PlaceholderTile extends StatelessWidget {
-  const _PlaceholderTile({
-    required this.icon,
-    required this.label,
-    required this.sublabel,
-  });
-
-  final IconData icon;
-  final String label;
-  final String sublabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: AppSpacing.iconMd,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: AppTypography.titleSmall),
-              Text(sublabel, style: AppTypography.labelSmall),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

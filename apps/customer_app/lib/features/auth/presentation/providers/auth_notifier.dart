@@ -55,7 +55,14 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
     // Check if there's an existing session on app launch
     final repository = ref.watch(authRepositoryProvider);
-    final currentUser = await repository.getCurrentUser();
+    PlatformUser? currentUser;
+    try {
+      currentUser = await repository.getCurrentUser();
+    } on CustomerAppRiderException {
+      return const AuthWrongRoleRider();
+    } on CustomerOnboardingUnavailableException catch (error) {
+      return AuthError(message: error.message);
+    }
 
     if (currentUser != null) {
       return AuthAuthenticated(user: currentUser);
@@ -102,6 +109,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       state = AsyncData(AuthAuthenticated(user: user));
     } on CustomerAppRiderException {
       state = const AsyncData(AuthWrongRoleRider());
+    } on CustomerOnboardingUnavailableException catch (error) {
+      state = AsyncData(AuthError(message: error.message));
     } catch (e) {
       state = AsyncData(AuthError(message: _mapError(e)));
     }

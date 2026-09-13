@@ -7,9 +7,14 @@ import 'package:theme/theme.dart';
 import 'package:customer_app/features/home/data/repositories/location_repository_impl.dart';
 
 class PickupSelectionScreen extends ConsumerStatefulWidget {
-  const PickupSelectionScreen({super.key, required this.initialLocation});
+  const PickupSelectionScreen({
+    super.key,
+    required this.initialLocation,
+    this.accuracyMeters,
+  });
 
   final Location initialLocation;
+  final double? accuracyMeters;
 
   @override
   ConsumerState<PickupSelectionScreen> createState() =>
@@ -150,6 +155,15 @@ class _PickupSelectionScreenState extends ConsumerState<PickupSelectionScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      widget.accuracyMeters == null
+                          ? 'Move the map so the pin is on the exact pickup point.'
+                          : 'GPS accuracy is about ${widget.accuracyMeters!.round()} m. Move the map so the pin is on the exact gate.',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextField(

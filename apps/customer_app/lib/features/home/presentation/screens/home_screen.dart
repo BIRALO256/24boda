@@ -24,15 +24,32 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeScreen();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final locationState = ref.read(locationNotifierProvider).valueOrNull;
+    if (locationNeedsRefresh(locationState, DateTime.now())) {
+      ref.read(locationNotifierProvider.notifier).fetchCurrentLocation();
+    }
   }
 
   Future<void> _initializeScreen() async {
@@ -69,16 +86,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (location != null) {
           final pos = LatLng(location.lat, location.lng);
           ref.read(mapNotifierProvider.notifier).animateTo(pos);
-          ref.read(mapMarkersProvider.notifier).state = {
-            Marker(
-              markerId: const MarkerId('current_location'),
-              position: pos,
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueOrange,
-              ),
-              infoWindow: const InfoWindow(title: 'Your location'),
-            ),
-          };
         }
       });
     });

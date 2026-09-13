@@ -13,8 +13,7 @@ class MapView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final markers = ref.watch(mapMarkersProvider);
     final locationState = ref.watch(locationNotifierProvider).valueOrNull;
-    final hasLocationPermission =
-        locationState is LocationLoaded || locationState is LocationLowAccuracy;
+    final hasLocationPermission = canShowDeviceLocation(locationState);
 
     return GoogleMap(
       initialCameraPosition: const CameraPosition(
@@ -37,6 +36,9 @@ class MapView extends ConsumerWidget {
   }
 }
 
+bool canShowDeviceLocation(LocationState? state) =>
+    state is LocationLoaded || state is LocationLowAccuracy;
+
 class MyLocationButton extends ConsumerWidget {
   const MyLocationButton({super.key});
 
@@ -44,21 +46,9 @@ class MyLocationButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () async {
-        final state = ref.read(locationNotifierProvider).valueOrNull;
-        final location = switch (state) {
-          LocationLoaded(:final location) => location,
-          LocationLowAccuracy(:final location) => location,
-          _ => null,
-        };
-        if (location != null) {
-          await ref
-              .read(mapNotifierProvider.notifier)
-              .animateTo(LatLng(location.lat, location.lng));
-        } else {
-          await ref
-              .read(locationNotifierProvider.notifier)
-              .fetchCurrentLocation();
-        }
+        await ref
+            .read(locationNotifierProvider.notifier)
+            .fetchCurrentLocation();
       },
       child: Container(
         width: 44,

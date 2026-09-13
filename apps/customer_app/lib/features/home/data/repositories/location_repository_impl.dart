@@ -24,18 +24,22 @@ class LocationRepositoryImpl implements LocationRepository {
     final position = await _datasource.getCurrentPosition();
 
     // Reverse geocode the coordinates to get a human-readable address
+    final fix = position.sample;
     final address = await _datasource.getAddressFromCoordinates(
-      position.latitude,
-      position.longitude,
+      fix.latitude,
+      fix.longitude,
     );
 
     return CurrentLocation(
       location: Location(
-        lat: position.latitude,
-        lng: position.longitude,
+        lat: fix.latitude,
+        lng: fix.longitude,
         address: address,
       ),
-      accuracyMeters: position.accuracy,
+      accuracyMeters: fix.accuracyMeters,
+      acquiredAt: fix.timestamp,
+      isMocked: fix.isMocked,
+      isStable: position.isStable,
     );
   }
 

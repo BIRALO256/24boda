@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
+import 'package:customer_app/features/home/domain/models/location_fix_sample.dart';
 
 /// All direct platform location API calls live here.
 ///
@@ -36,7 +37,7 @@ class LocationDatasource {
   /// 4. Get position
   ///
   /// Throws [LocationException] with a user-friendly message on failure.
-  Future<Position> getCurrentPosition() async {
+  Future<LocationFixResult> getCurrentPosition() async {
     // Step 1 — Check if location services are enabled on the device
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -75,12 +76,35 @@ class LocationDatasource {
     // No timeLimit — let it wait for the best fix rather than cutting
     // off at 10s and returning a WiFi-based inaccurate result.
     try {
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      final stream =
+          Geolocator.getPositionStream(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.best,
+                  distanceFilter: 0,
+                ),
+              )
+              .map((position) {
+                if (kDebugMode) {
+                  final age = DateTime.now().difference(position.timestamp);
+                  debugPrint(
+                    '[location] sample age=${age.inMilliseconds}ms '
+                    'accuracy=${position.accuracy.round()}m '
+                    'mocked=${position.isMocked}',
+                  );
+                }
+                return LocationFixSample(
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                  accuracyMeters: position.accuracy,
+                  timestamp: position.timestamp,
+                  isMocked: position.isMocked,
+                );
+              })
+              .timeout(
+                const Duration(seconds: 20),
+                onTimeout: (sink) => sink.close(),
+              );
+      return const LocationFixAcquirer().select(stream);
     } on TimeoutException {
       throw const LocationException(
         LocationFailureReason.timeout,
@@ -91,6 +115,8 @@ class LocationDatasource {
         LocationFailureReason.servicesDisabled,
         'Location services are disabled. Please enable GPS in your device settings.',
       );
+    } on LocationException {
+      rethrow;
     } catch (_) {
       throw const LocationException(
         LocationFailureReason.positionUnavailable,

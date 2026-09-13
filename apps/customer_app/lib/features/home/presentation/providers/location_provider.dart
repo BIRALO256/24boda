@@ -22,19 +22,26 @@ final class LocationLoading extends LocationState {
 
 /// GPS position fetched successfully.
 final class LocationLoaded extends LocationState {
-  const LocationLoaded({required this.location, required this.accuracyMeters});
+  const LocationLoaded({
+    required this.location,
+    required this.accuracyMeters,
+    this.acquiredAt,
+  });
   final Location location;
   final double accuracyMeters;
+  final DateTime? acquiredAt;
 }
 
 final class LocationLowAccuracy extends LocationState {
   const LocationLowAccuracy({
     required this.location,
     required this.accuracyMeters,
+    this.acquiredAt,
   });
 
   final Location location;
   final double accuracyMeters;
+  final DateTime? acquiredAt;
 }
 
 /// Location fetch failed.
@@ -73,17 +80,19 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
 
     try {
       final result = await ref.read(getCurrentLocationProvider).call();
-      state = result.accuracyMeters > 100
+      state = !result.isStable || result.accuracyMeters > 50
           ? AsyncData(
               LocationLowAccuracy(
                 location: result.location,
                 accuracyMeters: result.accuracyMeters,
+                acquiredAt: result.acquiredAt,
               ),
             )
           : AsyncData(
               LocationLoaded(
                 location: result.location,
                 accuracyMeters: result.accuracyMeters,
+                acquiredAt: result.acquiredAt,
               ),
             );
     } on LocationException catch (error) {
@@ -121,3 +130,13 @@ final locationNotifierProvider =
     AutoDisposeAsyncNotifierProvider<LocationNotifier, LocationState>(() {
       return LocationNotifier();
     });
+
+bool locationNeedsRefresh(LocationState? state, DateTime now) {
+  final acquiredAt = switch (state) {
+    LocationLoaded(:final acquiredAt) => acquiredAt,
+    LocationLowAccuracy(:final acquiredAt) => acquiredAt,
+    _ => null,
+  };
+  return acquiredAt == null ||
+      now.difference(acquiredAt) > const Duration(seconds: 30);
+}
