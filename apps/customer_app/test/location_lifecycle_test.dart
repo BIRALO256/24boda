@@ -141,6 +141,17 @@ void main() {
     );
   });
 
+  test('home map starts at an already resolved location', () {
+    const location = Location(lat: 0.332, lng: 32.568, address: 'Makerere');
+    expect(
+      initialMapTarget(
+        const LocationLoaded(location: location, accuracyMeters: 20),
+      ),
+      const LatLng(0.332, 32.568),
+    );
+    expect(initialMapTarget(const LocationInitial()), kKampalaDefault);
+  });
+
   test('location refreshes after returning with a stale fix', () {
     final now = DateTime.utc(2026, 9, 13, 11);
     final fresh = LocationLoaded(

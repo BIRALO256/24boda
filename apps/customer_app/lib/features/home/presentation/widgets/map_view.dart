@@ -11,13 +11,18 @@ class MapView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watching the controller state keeps this auto-dispose provider alive for
+    // exactly as long as the map widget exists. A read-only relationship can
+    // dispose the controller between map creation and a later GPS result.
+    ref.watch(mapNotifierProvider);
     final markers = ref.watch(mapMarkersProvider);
     final locationState = ref.watch(locationNotifierProvider).valueOrNull;
     final hasLocationPermission = canShowDeviceLocation(locationState);
+    final initialTarget = initialMapTarget(locationState);
 
     return GoogleMap(
-      initialCameraPosition: const CameraPosition(
-        target: kKampalaDefault,
+      initialCameraPosition: CameraPosition(
+        target: initialTarget,
         zoom: kDefaultZoom,
       ),
       onMapCreated: ref.read(mapNotifierProvider.notifier).onMapCreated,
@@ -38,6 +43,12 @@ class MapView extends ConsumerWidget {
 
 bool canShowDeviceLocation(LocationState? state) =>
     state is LocationLoaded || state is LocationLowAccuracy;
+
+LatLng initialMapTarget(LocationState? state) => switch (state) {
+  LocationLoaded(:final location) => LatLng(location.lat, location.lng),
+  LocationLowAccuracy(:final location) => LatLng(location.lat, location.lng),
+  _ => kKampalaDefault,
+};
 
 class MyLocationButton extends ConsumerWidget {
   const MyLocationButton({super.key});

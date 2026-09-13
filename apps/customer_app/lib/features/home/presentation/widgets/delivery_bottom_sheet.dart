@@ -1,9 +1,11 @@
 import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
+import 'package:customer_app/features/home/presentation/providers/map_provider.dart';
 import 'package:customer_app/features/home/presentation/providers/pickup_selection_provider.dart';
 import 'package:customer_app/features/home/presentation/screens/pickup_selection_screen.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
@@ -123,6 +125,14 @@ class DeliveryBottomSheet extends ConsumerWidget {
                       ref
                           .read(pickupSelectionProvider.notifier)
                           .confirm(result);
+                      await ref
+                          .read(mapNotifierProvider.notifier)
+                          .animateTo(
+                            LatLng(
+                              result.coordinate.latitude,
+                              result.coordinate.longitude,
+                            ),
+                          );
                     }
                   },
                 ),

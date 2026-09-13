@@ -6,6 +6,8 @@ final class LocationSnapshot {
     required this.address,
     required this.coordinate,
     this.placeId,
+    this.landmark,
+    this.instructions,
     this.contactName,
     this.contactPhoneE164,
   }) {
@@ -15,6 +17,8 @@ final class LocationSnapshot {
   final String address;
   final GeoCoordinate coordinate;
   final String? placeId;
+  final String? landmark;
+  final String? instructions;
   final String? contactName;
   final String? contactPhoneE164;
 
@@ -25,6 +29,11 @@ final class LocationSnapshot {
           ContractParsing.map(map['coordinate'], 'coordinate'),
         ),
         placeId: ContractParsing.optionalString(map['placeId'], 'placeId'),
+        landmark: ContractParsing.optionalString(map['landmark'], 'landmark'),
+        instructions: ContractParsing.optionalString(
+          map['instructions'],
+          'instructions',
+        ),
         contactName: ContractParsing.optionalString(
           map['contactName'],
           'contactName',
@@ -39,6 +48,8 @@ final class LocationSnapshot {
     'address': address,
     'coordinate': coordinate.toMap(),
     'placeId': placeId,
+    'landmark': landmark,
+    'instructions': instructions,
     'contactName': contactName,
     'contactPhoneE164': contactPhoneE164,
   };
