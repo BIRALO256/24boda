@@ -27,6 +27,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  DateTime? _backgroundedAt;
 
   @override
   void initState() {
@@ -45,9 +46,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _backgroundedAt ??= DateTime.now();
+      return;
+    }
     if (state != AppLifecycleState.resumed) return;
+
+    final backgroundedAt = _backgroundedAt;
+    _backgroundedAt = null;
     final locationState = ref.read(locationNotifierProvider).valueOrNull;
-    if (locationNeedsRefresh(locationState, DateTime.now())) {
+    if (shouldRefreshLocationAfterBackground(
+      state: locationState,
+      backgroundedAt: backgroundedAt,
+      resumedAt: DateTime.now(),
+    )) {
       ref.read(locationNotifierProvider.notifier).fetchCurrentLocation();
     }
   }
@@ -75,6 +88,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final locationState = ref.watch(locationNotifierProvider).valueOrNull;
+
     // Animate camera and drop marker when GPS resolves
     ref.listen<AsyncValue<LocationState>>(locationNotifierProvider, (_, next) {
       next.whenData((state) {
@@ -89,6 +104,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         }
       });
     });
+
+    // Do not reveal a geographically false map or partially initialized home
+    // screen. Errors are allowed through so the customer can recover or choose
+    // a pickup manually instead of being trapped behind a loader.
+    if (locationState == null ||
+        locationState is LocationInitial ||
+        locationState is LocationLoading) {
+      return const _LocationStartupView();
+    }
 
     return Scaffold(
       key: _scaffoldKey,
@@ -136,6 +160,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: const MyLocationButton(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LocationStartupView extends StatelessWidget {
+  const _LocationStartupView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Image(
+                image: AssetImage('packages/theme/assets/images/logo.png'),
+                width: 88,
+                height: 88,
+              ),
+              SizedBox(height: AppSpacing.lg),
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(height: AppSpacing.md),
+              Text('Preparing your map…'),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -140,3 +140,28 @@ bool locationNeedsRefresh(LocationState? state, DateTime now) {
   return acquiredAt == null ||
       now.difference(acquiredAt) > const Duration(seconds: 30);
 }
+
+/// Refresh only after a genuine, meaningful trip to the background.
+/// Transient inactive/resumed events (screenshots, system overlays) must not
+/// restart GPS or disturb the map.
+bool shouldRefreshLocationAfterBackground({
+  required LocationState? state,
+  required DateTime? backgroundedAt,
+  required DateTime resumedAt,
+  Duration minimumBackgroundDuration = const Duration(minutes: 1),
+  Duration maximumFixAge = const Duration(minutes: 2),
+}) {
+  if (backgroundedAt == null || resumedAt.isBefore(backgroundedAt)) {
+    return false;
+  }
+  if (resumedAt.difference(backgroundedAt) < minimumBackgroundDuration) {
+    return false;
+  }
+
+  final acquiredAt = switch (state) {
+    LocationLoaded(:final acquiredAt) => acquiredAt,
+    LocationLowAccuracy(:final acquiredAt) => acquiredAt,
+    _ => null,
+  };
+  return acquiredAt == null || resumedAt.difference(acquiredAt) > maximumFixAge;
+}

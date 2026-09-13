@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:core_models/core_models.dart';
 import 'package:customer_app/features/home/data/repositories/location_repository_impl.dart';
+import 'package:customer_app/features/home/data/datasources/location_datasource.dart';
 import 'package:customer_app/features/home/domain/models/current_location.dart';
 import 'package:customer_app/features/home/domain/models/location_fix_sample.dart';
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
@@ -12,6 +13,7 @@ import 'package:customer_app/features/home/presentation/widgets/map_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geocoding/geocoding.dart' as geo;
 
 void main() {
   group('LocationFixPolicy', () {
@@ -149,7 +151,64 @@ void main() {
       ),
       const LatLng(0.332, 32.568),
     );
-    expect(initialMapTarget(const LocationInitial()), kKampalaDefault);
+    expect(initialMapTarget(const LocationInitial()), isNull);
+  });
+
+  test('transient resume such as a screenshot does not refresh location', () {
+    final now = DateTime.utc(2026, 9, 13, 11);
+    final state = LocationLoaded(
+      location: const Location(lat: 0.332, lng: 32.568, address: 'Makerere'),
+      accuracyMeters: 20,
+      acquiredAt: now.subtract(const Duration(minutes: 5)),
+    );
+    expect(
+      shouldRefreshLocationAfterBackground(
+        state: state,
+        backgroundedAt: null,
+        resumedAt: now,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldRefreshLocationAfterBackground(
+        state: state,
+        backgroundedAt: now.subtract(const Duration(seconds: 5)),
+        resumedAt: now,
+      ),
+      isFalse,
+    );
+  });
+
+  test('stale location refreshes after a meaningful background period', () {
+    final now = DateTime.utc(2026, 9, 13, 11);
+    final state = LocationLoaded(
+      location: const Location(lat: 0.332, lng: 32.568, address: 'Makerere'),
+      accuracyMeters: 20,
+      acquiredAt: now.subtract(const Duration(minutes: 3)),
+    );
+    expect(
+      shouldRefreshLocationAfterBackground(
+        state: state,
+        backgroundedAt: now.subtract(const Duration(minutes: 2)),
+        resumedAt: now,
+      ),
+      isTrue,
+    );
+  });
+
+  test('address formatter prefers a street over an administrative result', () {
+    final label = formatDeliveryPlacemark(const [
+      geo.Placemark(
+        subAdministrativeArea: 'Kawempe Division',
+        locality: 'Kampala',
+      ),
+      geo.Placemark(
+        street: '164C Sir Apollo Kaggwa Road',
+        subLocality: 'Makerere',
+        locality: 'Kampala',
+      ),
+    ], coordinateFallback: '0.3320, 32.5680');
+    expect(label, '164C Sir Apollo Kaggwa Road, Makerere');
   });
 
   test('location refreshes after returning with a stale fix', () {

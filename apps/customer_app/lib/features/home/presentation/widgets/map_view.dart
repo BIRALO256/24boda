@@ -20,6 +20,17 @@ class MapView extends ConsumerWidget {
     final hasLocationPermission = canShowDeviceLocation(locationState);
     final initialTarget = initialMapTarget(locationState);
 
+    // A city-centre fallback looks like a real location and then visibly jumps
+    // when GPS resolves. Keep the map hidden until it has an honest target.
+    if (initialTarget == null) {
+      return const ColoredBox(
+        color: AppColors.surface,
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return GoogleMap(
       initialCameraPosition: CameraPosition(
         target: initialTarget,
@@ -44,10 +55,10 @@ class MapView extends ConsumerWidget {
 bool canShowDeviceLocation(LocationState? state) =>
     state is LocationLoaded || state is LocationLowAccuracy;
 
-LatLng initialMapTarget(LocationState? state) => switch (state) {
+LatLng? initialMapTarget(LocationState? state) => switch (state) {
   LocationLoaded(:final location) => LatLng(location.lat, location.lng),
   LocationLowAccuracy(:final location) => LatLng(location.lat, location.lng),
-  _ => kKampalaDefault,
+  _ => null,
 };
 
 class MyLocationButton extends ConsumerWidget {

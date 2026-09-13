@@ -198,36 +198,72 @@ class LocationDatasource {
         return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       }
 
-      final place = placemarks.first;
-
-      // Build address from most specific to least specific.
-      // We intentionally skip place.name because in Uganda the geocoder
-      // returns Plus Codes (e.g. "8HP7+H29") as the name for locations
-      // without registered street addresses — not useful to display.
-      final parts = <String>[
-        if (place.street != null &&
-            place.street!.isNotEmpty &&
-            !place.street!.contains('+')) // skip Plus Code streets
-          place.street!,
-        if (place.subLocality != null && place.subLocality!.isNotEmpty)
-          place.subLocality!,
-        if (place.locality != null && place.locality!.isNotEmpty)
-          place.locality!,
-      ];
-
-      if (parts.isEmpty) {
-        // Last fallback — use thoroughfare or admin area
-        final fallback =
-            place.thoroughfare ??
-            place.subAdministrativeArea ??
-            place.administrativeArea;
-        if (fallback != null && fallback.isNotEmpty) return fallback;
-        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
-      }
-
-      return parts.take(2).join(', ');
+      return formatDeliveryPlacemark(
+        placemarks,
+        coordinateFallback:
+            '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}',
+      );
     } catch (_) {
       return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
     }
   }
+}
+
+String formatDeliveryPlacemark(
+  List<geo.Placemark> placemarks, {
+  required String coordinateFallback,
+}) {
+  String clean(String? value) => value?.trim() ?? '';
+  bool isPlusCode(String value) => RegExp(
+    r'^[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,}',
+    caseSensitive: false,
+  ).hasMatch(value);
+
+  ({String label, int score}) build(geo.Placemark place) {
+    final administrative = {
+      clean(place.subLocality).toLowerCase(),
+      clean(place.locality).toLowerCase(),
+      clean(place.subAdministrativeArea).toLowerCase(),
+      clean(place.administrativeArea).toLowerCase(),
+    }..remove('');
+    final street = clean(place.street);
+    final thoroughfare = clean(place.thoroughfare);
+    final name = clean(place.name);
+    final specific = [street, thoroughfare, name].firstWhere(
+      (value) =>
+          value.isNotEmpty &&
+          !administrative.contains(value.toLowerCase()) &&
+          !isPlusCode(value),
+      orElse: () => '',
+    );
+    final area =
+        [
+          clean(place.subLocality),
+          clean(place.locality),
+          clean(place.subAdministrativeArea),
+          clean(place.administrativeArea),
+        ].firstWhere(
+          (value) =>
+              value.isNotEmpty && value.toLowerCase() != specific.toLowerCase(),
+          orElse: () => '',
+        );
+    if (specific.isNotEmpty) {
+      final score = street.isNotEmpty ? 3 : (thoroughfare.isNotEmpty ? 2 : 1);
+      return (
+        label: area.isEmpty ? specific : '$specific, $area',
+        score: score,
+      );
+    }
+    if (area.isNotEmpty) return (label: area, score: 0);
+    final plusCode = [street, name].firstWhere(
+      (value) => value.isNotEmpty && isPlusCode(value),
+      orElse: () => '',
+    );
+    return (label: plusCode, score: -1);
+  }
+
+  final candidates =
+      placemarks.map(build).where((item) => item.label.isNotEmpty).toList()
+        ..sort((a, b) => b.score.compareTo(a.score));
+  return candidates.isEmpty ? coordinateFallback : candidates.first.label;
 }
