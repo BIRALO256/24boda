@@ -59,14 +59,17 @@ final class AuthRepositoryImpl implements AuthRepository {
     try {
       return await _datasource.completeCustomerOnboarding();
     } on CustomerOnboardingException catch (error) {
-      if (error.code == 'permission-denied') {
+      if (isWrongRoleOnboardingError(error)) {
         await _datasource.signOut();
         throw const CustomerAppRiderException();
       }
-      rethrow;
+      throw CustomerOnboardingUnavailableException(error.message);
     }
   }
 }
+
+bool isWrongRoleOnboardingError(CustomerOnboardingException error) =>
+    error.reason == 'wrong-role';
 
 final firebaseAuthDatasourceProvider = Provider<FirebaseAuthDatasource>((ref) {
   return FirebaseAuthDatasource();
@@ -78,4 +81,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final class CustomerAppRiderException implements Exception {
   const CustomerAppRiderException();
+}
+
+final class CustomerOnboardingUnavailableException implements Exception {
+  const CustomerOnboardingUnavailableException(this.message);
+  final String message;
 }

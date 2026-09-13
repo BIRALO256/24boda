@@ -42,7 +42,13 @@ final class MapReady extends MapState {
 /// Storing it in Riverpod makes it accessible to all of them without prop drilling.
 class MapNotifier extends AutoDisposeNotifier<MapState> {
   @override
-  MapState build() => const MapUninitialized();
+  MapState build() {
+    ref.onDispose(() {
+      final current = state;
+      if (current is MapReady) current.controller.dispose();
+    });
+    return const MapUninitialized();
+  }
 
   /// Called by [MapView] when the GoogleMap widget is created.
   Future<void> onMapCreated(GoogleMapController controller) async {
@@ -69,16 +75,6 @@ class MapNotifier extends AutoDisposeNotifier<MapState> {
     await current.controller.animateCamera(
       CameraUpdate.newCameraPosition(camera),
     );
-  }
-
-  /// Disposes the map controller when the provider is disposed.
-  /// Prevents memory leaks when navigating away from the home screen.
-  void disposeController() {
-    final current = state;
-    if (current is MapReady) {
-      current.controller.dispose();
-    }
-    state = const MapUninitialized();
   }
 }
 

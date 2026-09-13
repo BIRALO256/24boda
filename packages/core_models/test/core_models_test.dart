@@ -4,6 +4,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'fixtures/contract_fixtures.dart';
 
 void main() {
+  test('location snapshot preserves delivery addressing details', () {
+    final snapshot = LocationSnapshot(
+      address: 'Kira Road, Kampala',
+      coordinate: GeoCoordinate(latitude: 0.3476, longitude: 32.5825),
+      landmark: 'Opposite Acacia Mall',
+      instructions: 'Call at the gate',
+    );
+
+    expect(
+      LocationSnapshot.fromMap(snapshot.toMap()).landmark,
+      'Opposite Acacia Mall',
+    );
+    expect(
+      LocationSnapshot.fromMap(snapshot.toMap()).instructions,
+      'Call at the gate',
+    );
+  });
+
   group('Money', () {
     test('round-trips integer UGX without precision loss', () {
       final money = Money.fromMap({'amount': 12550, 'currency': 'UGX'});

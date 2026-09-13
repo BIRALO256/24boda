@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:customer_app/features/home/domain/usecases/get_current_location.dart';
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
+import 'package:customer_app/features/home/domain/usecases/open_location_settings.dart';
 
 /// State of the location detection process.
 sealed class LocationState {
@@ -21,19 +22,26 @@ final class LocationLoading extends LocationState {
 
 /// GPS position fetched successfully.
 final class LocationLoaded extends LocationState {
-  const LocationLoaded({required this.location, required this.accuracyMeters});
+  const LocationLoaded({
+    required this.location,
+    required this.accuracyMeters,
+    this.acquiredAt,
+  });
   final Location location;
   final double accuracyMeters;
+  final DateTime? acquiredAt;
 }
 
 final class LocationLowAccuracy extends LocationState {
   const LocationLowAccuracy({
     required this.location,
     required this.accuracyMeters,
+    this.acquiredAt,
   });
 
   final Location location;
   final double accuracyMeters;
+  final DateTime? acquiredAt;
 }
 
 /// Location fetch failed.
@@ -41,6 +49,12 @@ final class LocationError extends LocationState {
   const LocationError({required this.reason, required this.message});
   final LocationFailureReason reason;
   final String message;
+
+  String get actionLabel => switch (reason) {
+    LocationFailureReason.servicesDisabled => 'Enable GPS',
+    LocationFailureReason.permissionDeniedForever => 'Open settings',
+    _ => 'Try again',
+  };
 }
 
 /// Manages GPS location state for the home screen.
@@ -61,21 +75,24 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
   /// Fetches the current GPS location.
   /// Called from home_screen when it first mounts.
   Future<void> fetchCurrentLocation() async {
+    if (state.valueOrNull is LocationLoading) return;
     state = const AsyncData(LocationLoading());
 
     try {
       final result = await ref.read(getCurrentLocationProvider).call();
-      state = result.accuracyMeters > 100
+      state = !result.isStable || result.accuracyMeters > 50
           ? AsyncData(
               LocationLowAccuracy(
                 location: result.location,
                 accuracyMeters: result.accuracyMeters,
+                acquiredAt: result.acquiredAt,
               ),
             )
           : AsyncData(
               LocationLoaded(
                 location: result.location,
                 accuracyMeters: result.accuracyMeters,
+                acquiredAt: result.acquiredAt,
               ),
             );
     } on LocationException catch (error) {
@@ -91,6 +108,21 @@ class LocationNotifier extends AutoDisposeAsyncNotifier<LocationState> {
       );
     }
   }
+
+  Future<void> recover(LocationFailureReason reason) async {
+    final settings = ref.read(openLocationSettingsProvider);
+    switch (reason) {
+      case LocationFailureReason.servicesDisabled:
+        await settings.openServices();
+        return;
+      case LocationFailureReason.permissionDeniedForever:
+        await settings.openApp();
+        return;
+      default:
+        await fetchCurrentLocation();
+        return;
+    }
+  }
 }
 
 /// Provider for [LocationNotifier].
@@ -98,3 +130,38 @@ final locationNotifierProvider =
     AutoDisposeAsyncNotifierProvider<LocationNotifier, LocationState>(() {
       return LocationNotifier();
     });
+
+bool locationNeedsRefresh(LocationState? state, DateTime now) {
+  final acquiredAt = switch (state) {
+    LocationLoaded(:final acquiredAt) => acquiredAt,
+    LocationLowAccuracy(:final acquiredAt) => acquiredAt,
+    _ => null,
+  };
+  return acquiredAt == null ||
+      now.difference(acquiredAt) > const Duration(seconds: 30);
+}
+
+/// Refresh only after a genuine, meaningful trip to the background.
+/// Transient inactive/resumed events (screenshots, system overlays) must not
+/// restart GPS or disturb the map.
+bool shouldRefreshLocationAfterBackground({
+  required LocationState? state,
+  required DateTime? backgroundedAt,
+  required DateTime resumedAt,
+  Duration minimumBackgroundDuration = const Duration(minutes: 1),
+  Duration maximumFixAge = const Duration(minutes: 2),
+}) {
+  if (backgroundedAt == null || resumedAt.isBefore(backgroundedAt)) {
+    return false;
+  }
+  if (resumedAt.difference(backgroundedAt) < minimumBackgroundDuration) {
+    return false;
+  }
+
+  final acquiredAt = switch (state) {
+    LocationLoaded(:final acquiredAt) => acquiredAt,
+    LocationLowAccuracy(:final acquiredAt) => acquiredAt,
+    _ => null,
+  };
+  return acquiredAt == null || resumedAt.difference(acquiredAt) > maximumFixAge;
+}

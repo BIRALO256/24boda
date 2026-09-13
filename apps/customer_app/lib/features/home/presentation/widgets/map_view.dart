@@ -11,14 +11,29 @@ class MapView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watching the controller state keeps this auto-dispose provider alive for
+    // exactly as long as the map widget exists. A read-only relationship can
+    // dispose the controller between map creation and a later GPS result.
+    ref.watch(mapNotifierProvider);
     final markers = ref.watch(mapMarkersProvider);
     final locationState = ref.watch(locationNotifierProvider).valueOrNull;
-    final hasLocationPermission =
-        locationState is LocationLoaded || locationState is LocationLowAccuracy;
+    final hasLocationPermission = canShowDeviceLocation(locationState);
+    final initialTarget = initialMapTarget(locationState);
+
+    // A city-centre fallback looks like a real location and then visibly jumps
+    // when GPS resolves. Keep the map hidden until it has an honest target.
+    if (initialTarget == null) {
+      return const ColoredBox(
+        color: AppColors.surface,
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
 
     return GoogleMap(
-      initialCameraPosition: const CameraPosition(
-        target: kKampalaDefault,
+      initialCameraPosition: CameraPosition(
+        target: initialTarget,
         zoom: kDefaultZoom,
       ),
       onMapCreated: ref.read(mapNotifierProvider.notifier).onMapCreated,
@@ -37,6 +52,15 @@ class MapView extends ConsumerWidget {
   }
 }
 
+bool canShowDeviceLocation(LocationState? state) =>
+    state is LocationLoaded || state is LocationLowAccuracy;
+
+LatLng? initialMapTarget(LocationState? state) => switch (state) {
+  LocationLoaded(:final location) => LatLng(location.lat, location.lng),
+  LocationLowAccuracy(:final location) => LatLng(location.lat, location.lng),
+  _ => null,
+};
+
 class MyLocationButton extends ConsumerWidget {
   const MyLocationButton({super.key});
 
@@ -44,21 +68,9 @@ class MyLocationButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () async {
-        final state = ref.read(locationNotifierProvider).valueOrNull;
-        final location = switch (state) {
-          LocationLoaded(:final location) => location,
-          LocationLowAccuracy(:final location) => location,
-          _ => null,
-        };
-        if (location != null) {
-          await ref
-              .read(mapNotifierProvider.notifier)
-              .animateTo(LatLng(location.lat, location.lng));
-        } else {
-          await ref
-              .read(locationNotifierProvider.notifier)
-              .fetchCurrentLocation();
-        }
+        await ref
+            .read(locationNotifierProvider.notifier)
+            .fetchCurrentLocation();
       },
       child: Container(
         width: 44,

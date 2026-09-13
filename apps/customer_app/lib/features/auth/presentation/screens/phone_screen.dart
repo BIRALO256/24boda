@@ -91,6 +91,9 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     // Show snackbar on error — non-blocking, dismissable
     ref.listen<AsyncValue<AuthState>>(authNotifierProvider, (_, next) {
       next.whenData((state) {
+        if (state is! AuthError) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
         if (state is AuthOtpSent) {
           context.goToOtp(
             verificationId: state.verificationId,

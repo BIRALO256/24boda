@@ -128,15 +128,18 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     // Listen for errors
     ref.listen<AsyncValue<AuthState>>(authNotifierProvider, (_, next) {
       next.whenData((state) {
+        if (state is! AuthError) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
         if (state is AuthError) {
+          final notifier = ref.read(authNotifierProvider.notifier);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
               action: SnackBarAction(
                 label: 'Try Again',
                 onPressed: () {
-                  ref.read(authNotifierProvider.notifier).resetError();
-                  Navigator.of(context).pop();
+                  notifier.resetError();
                 },
               ),
             ),

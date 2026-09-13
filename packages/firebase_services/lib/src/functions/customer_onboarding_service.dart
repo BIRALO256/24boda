@@ -4,10 +4,12 @@ final class CustomerOnboardingException implements Exception {
   const CustomerOnboardingException({
     required this.code,
     required this.message,
+    this.reason,
   });
 
   final String code;
   final String message;
+  final String? reason;
 
   @override
   String toString() => 'CustomerOnboardingException($code): $message';
@@ -69,6 +71,9 @@ final class CustomerOnboardingService {
       throw CustomerOnboardingException(
         code: error.code,
         message: error.message ?? 'Customer onboarding failed',
+        reason: error.details is Map
+            ? (error.details as Map)['reason'] as String?
+            : null,
       );
     }
   }

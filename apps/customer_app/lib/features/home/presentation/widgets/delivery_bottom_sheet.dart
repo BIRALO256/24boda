@@ -1,8 +1,13 @@
+import 'package:core_models/core_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
+import 'package:customer_app/features/home/presentation/providers/map_provider.dart';
+import 'package:customer_app/features/home/presentation/providers/pickup_selection_provider.dart';
+import 'package:customer_app/features/home/presentation/screens/pickup_selection_screen.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_state.dart';
 import 'package:customer_app/features/shipment/presentation/screens/address_search_screen.dart';
@@ -42,6 +47,7 @@ class DeliveryBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationState = ref.watch(locationNotifierProvider).valueOrNull;
+    final confirmedPickup = ref.watch(pickupSelectionProvider);
     final shipmentState = ref.watch(shipmentCreationProvider);
 
     // Get the selected dropoff address if user already picked one
@@ -85,7 +91,51 @@ class DeliveryBottomSheet extends ConsumerWidget {
                 _SectionLabel(label: 'Deliver from'),
                 const SizedBox(height: AppSpacing.sm),
 
-                _PickupLocationTile(locationState: locationState),
+                _PickupLocationTile(
+                  locationState: locationState,
+                  confirmedAddress: confirmedPickup?.address,
+                  confirmedLandmark: confirmedPickup?.landmark,
+                  onTap: () async {
+                    final location = switch (locationState) {
+                      LocationLoaded(:final location) => location,
+                      LocationLowAccuracy(:final location) => location,
+                      _ => null,
+                    };
+                    if (location == null) {
+                      await ref
+                          .read(locationNotifierProvider.notifier)
+                          .fetchCurrentLocation();
+                      return;
+                    }
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute<LocationSnapshot>(
+                        builder: (_) => PickupSelectionScreen(
+                          initialLocation: location,
+                          accuracyMeters: switch (locationState) {
+                            LocationLoaded(:final accuracyMeters) =>
+                              accuracyMeters,
+                            LocationLowAccuracy(:final accuracyMeters) =>
+                              accuracyMeters,
+                            _ => null,
+                          },
+                        ),
+                      ),
+                    );
+                    if (result != null) {
+                      ref
+                          .read(pickupSelectionProvider.notifier)
+                          .confirm(result);
+                      await ref
+                          .read(mapNotifierProvider.notifier)
+                          .animateTo(
+                            LatLng(
+                              result.coordinate.latitude,
+                              result.coordinate.longitude,
+                            ),
+                          );
+                    }
+                  },
+                ),
 
                 const SizedBox(height: AppSpacing.md),
 
@@ -93,6 +143,14 @@ class DeliveryBottomSheet extends ConsumerWidget {
                 _WhereToDeliverButton(
                   selectedAddress: selectedDropoff,
                   onTap: () {
+                    if (confirmedPickup == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Confirm your pickup location first.'),
+                        ),
+                      );
+                      return;
+                    }
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -103,15 +161,6 @@ class DeliveryBottomSheet extends ConsumerWidget {
                 ),
 
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── Recent deliveries ──────────────────────────────────────
-                // Recognition over recall (Norman) — showing past destinations
-                // means users don't have to remember or retype addresses.
-                // Only visible when sheet is expanded.
-                _SectionLabel(label: 'Recent deliveries'),
-                const SizedBox(height: AppSpacing.sm),
-
-                const _RecentDeliveriesPlaceholder(),
 
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -165,20 +214,30 @@ class _SectionLabel extends StatelessWidget {
 /// Shows the current GPS-detected pickup address.
 /// Tappable — lets the user change the pickup location.
 class _PickupLocationTile extends StatelessWidget {
-  const _PickupLocationTile({required this.locationState});
+  const _PickupLocationTile({
+    required this.locationState,
+    required this.onTap,
+    this.confirmedAddress,
+    this.confirmedLandmark,
+  });
 
-  final dynamic locationState;
+  final LocationState? locationState;
+  final VoidCallback onTap;
+  final String? confirmedAddress;
+  final String? confirmedLandmark;
 
   @override
   Widget build(BuildContext context) {
-    final address = locationState is LocationLoaded
-        ? (locationState as LocationLoaded).location.address
-        : null;
+    final detectedAddress = switch (locationState) {
+      LocationLoaded(:final location) => location.address,
+      LocationLowAccuracy(:final location) => location.address,
+      _ => null,
+    };
+    final address = confirmedAddress ?? detectedAddress;
+    final isConfirmed = confirmedAddress != null;
 
     return GestureDetector(
-      onTap: () {
-        // TODO: navigate to pickup address search in Step 8
-      },
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
@@ -199,9 +258,9 @@ class _PickupLocationTile extends StatelessWidget {
                 color: AppColors.primarySurface,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.my_location_rounded,
-                color: AppColors.primary,
+              child: Icon(
+                isConfirmed ? Icons.check_rounded : Icons.my_location_rounded,
+                color: isConfirmed ? AppColors.success : AppColors.primary,
                 size: AppSpacing.iconMd,
               ),
             ),
@@ -238,8 +297,12 @@ class _PickupLocationTile extends StatelessWidget {
                         ),
                         if (address != null)
                           Text(
-                            'Tap to change pickup',
+                            isConfirmed
+                                ? (confirmedLandmark ?? 'Pickup confirmed')
+                                : 'Tap to confirm or adjust pickup',
                             style: AppTypography.labelSmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                       ],
                     ),
@@ -331,74 +394,6 @@ class _WhereToDeliverButton extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Placeholder for recent deliveries list.
-/// Replaced with real data when shipment history is built in Step 9.
-class _RecentDeliveriesPlaceholder extends StatelessWidget {
-  const _RecentDeliveriesPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _PlaceholderTile(
-          icon: Icons.access_time_rounded,
-          label: 'Owino Market',
-          sublabel: 'Kampala, Uganda',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _PlaceholderTile(
-          icon: Icons.access_time_rounded,
-          label: 'Kampala Road',
-          sublabel: 'Kampala, Uganda',
-        ),
-      ],
-    );
-  }
-}
-
-class _PlaceholderTile extends StatelessWidget {
-  const _PlaceholderTile({
-    required this.icon,
-    required this.label,
-    required this.sublabel,
-  });
-
-  final IconData icon;
-  final String label;
-  final String sublabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: AppSpacing.iconMd,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: AppTypography.titleSmall),
-              Text(sublabel, style: AppTypography.labelSmall),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

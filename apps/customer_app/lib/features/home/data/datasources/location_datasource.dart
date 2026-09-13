@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:customer_app/features/home/domain/repositories/location_repository.dart';
+import 'package:customer_app/features/home/domain/models/location_fix_sample.dart';
 
 /// All direct platform location API calls live here.
 ///
@@ -21,6 +22,12 @@ import 'package:customer_app/features/home/domain/repositories/location_reposito
 /// On mobile, it uses the device GPS directly.
 /// Both return the same Position object — no conditional code needed here.
 class LocationDatasource {
+  Future<bool> openAppSettings() async =>
+      kIsWeb ? false : Geolocator.openAppSettings();
+
+  Future<bool> openLocationSettings() async =>
+      kIsWeb ? false : Geolocator.openLocationSettings();
+
   /// Requests location permission and returns the current position.
   ///
   /// Permission flow:
@@ -30,7 +37,7 @@ class LocationDatasource {
   /// 4. Get position
   ///
   /// Throws [LocationException] with a user-friendly message on failure.
-  Future<Position> getCurrentPosition() async {
+  Future<LocationFixResult> getCurrentPosition() async {
     // Step 1 — Check if location services are enabled on the device
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -69,12 +76,35 @@ class LocationDatasource {
     // No timeLimit — let it wait for the best fix rather than cutting
     // off at 10s and returning a WiFi-based inaccurate result.
     try {
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      final stream =
+          Geolocator.getPositionStream(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.best,
+                  distanceFilter: 0,
+                ),
+              )
+              .map((position) {
+                if (kDebugMode) {
+                  final age = DateTime.now().difference(position.timestamp);
+                  debugPrint(
+                    '[location] sample age=${age.inMilliseconds}ms '
+                    'accuracy=${position.accuracy.round()}m '
+                    'mocked=${position.isMocked}',
+                  );
+                }
+                return LocationFixSample(
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                  accuracyMeters: position.accuracy,
+                  timestamp: position.timestamp,
+                  isMocked: position.isMocked,
+                );
+              })
+              .timeout(
+                const Duration(seconds: 20),
+                onTimeout: (sink) => sink.close(),
+              );
+      return const LocationFixAcquirer().select(stream);
     } on TimeoutException {
       throw const LocationException(
         LocationFailureReason.timeout,
@@ -85,6 +115,8 @@ class LocationDatasource {
         LocationFailureReason.servicesDisabled,
         'Location services are disabled. Please enable GPS in your device settings.',
       );
+    } on LocationException {
+      rethrow;
     } catch (_) {
       throw const LocationException(
         LocationFailureReason.positionUnavailable,
@@ -166,36 +198,72 @@ class LocationDatasource {
         return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
       }
 
-      final place = placemarks.first;
-
-      // Build address from most specific to least specific.
-      // We intentionally skip place.name because in Uganda the geocoder
-      // returns Plus Codes (e.g. "8HP7+H29") as the name for locations
-      // without registered street addresses — not useful to display.
-      final parts = <String>[
-        if (place.street != null &&
-            place.street!.isNotEmpty &&
-            !place.street!.contains('+')) // skip Plus Code streets
-          place.street!,
-        if (place.subLocality != null && place.subLocality!.isNotEmpty)
-          place.subLocality!,
-        if (place.locality != null && place.locality!.isNotEmpty)
-          place.locality!,
-      ];
-
-      if (parts.isEmpty) {
-        // Last fallback — use thoroughfare or admin area
-        final fallback =
-            place.thoroughfare ??
-            place.subAdministrativeArea ??
-            place.administrativeArea;
-        if (fallback != null && fallback.isNotEmpty) return fallback;
-        return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
-      }
-
-      return parts.take(2).join(', ');
+      return formatDeliveryPlacemark(
+        placemarks,
+        coordinateFallback:
+            '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}',
+      );
     } catch (_) {
       return '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
     }
   }
+}
+
+String formatDeliveryPlacemark(
+  List<geo.Placemark> placemarks, {
+  required String coordinateFallback,
+}) {
+  String clean(String? value) => value?.trim() ?? '';
+  bool isPlusCode(String value) => RegExp(
+    r'^[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,}',
+    caseSensitive: false,
+  ).hasMatch(value);
+
+  ({String label, int score}) build(geo.Placemark place) {
+    final administrative = {
+      clean(place.subLocality).toLowerCase(),
+      clean(place.locality).toLowerCase(),
+      clean(place.subAdministrativeArea).toLowerCase(),
+      clean(place.administrativeArea).toLowerCase(),
+    }..remove('');
+    final street = clean(place.street);
+    final thoroughfare = clean(place.thoroughfare);
+    final name = clean(place.name);
+    final specific = [street, thoroughfare, name].firstWhere(
+      (value) =>
+          value.isNotEmpty &&
+          !administrative.contains(value.toLowerCase()) &&
+          !isPlusCode(value),
+      orElse: () => '',
+    );
+    final area =
+        [
+          clean(place.subLocality),
+          clean(place.locality),
+          clean(place.subAdministrativeArea),
+          clean(place.administrativeArea),
+        ].firstWhere(
+          (value) =>
+              value.isNotEmpty && value.toLowerCase() != specific.toLowerCase(),
+          orElse: () => '',
+        );
+    if (specific.isNotEmpty) {
+      final score = street.isNotEmpty ? 3 : (thoroughfare.isNotEmpty ? 2 : 1);
+      return (
+        label: area.isEmpty ? specific : '$specific, $area',
+        score: score,
+      );
+    }
+    if (area.isNotEmpty) return (label: area, score: 0);
+    final plusCode = [street, name].firstWhere(
+      (value) => value.isNotEmpty && isPlusCode(value),
+      orElse: () => '',
+    );
+    return (label: plusCode, score: -1);
+  }
+
+  final candidates =
+      placemarks.map(build).where((item) => item.label.isNotEmpty).toList()
+        ..sort((a, b) => b.score.compareTo(a.score));
+  return candidates.isEmpty ? coordinateFallback : candidates.first.label;
 }

@@ -10,6 +10,7 @@ import 'package:customer_app/features/home/presentation/screens/name_collection_
 import 'package:customer_app/features/home/presentation/widgets/delivery_bottom_sheet.dart';
 import 'package:customer_app/features/home/presentation/widgets/home_drawer.dart';
 import 'package:customer_app/features/home/presentation/widgets/home_top_bar.dart';
+import 'package:customer_app/features/home/presentation/widgets/location_status_banner.dart';
 import 'package:customer_app/features/home/presentation/widgets/map_view.dart';
 
 /// Customer home screen — pure orchestrator.
@@ -23,15 +24,45 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  DateTime? _backgroundedAt;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeScreen();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _backgroundedAt ??= DateTime.now();
+      return;
+    }
+    if (state != AppLifecycleState.resumed) return;
+
+    final backgroundedAt = _backgroundedAt;
+    _backgroundedAt = null;
+    final locationState = ref.read(locationNotifierProvider).valueOrNull;
+    if (shouldRefreshLocationAfterBackground(
+      state: locationState,
+      backgroundedAt: backgroundedAt,
+      resumedAt: DateTime.now(),
+    )) {
+      ref.read(locationNotifierProvider.notifier).fetchCurrentLocation();
+    }
   }
 
   Future<void> _initializeScreen() async {
@@ -57,6 +88,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locationState = ref.watch(locationNotifierProvider).valueOrNull;
+
     // Animate camera and drop marker when GPS resolves
     ref.listen<AsyncValue<LocationState>>(locationNotifierProvider, (_, next) {
       next.whenData((state) {
@@ -68,19 +101,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (location != null) {
           final pos = LatLng(location.lat, location.lng);
           ref.read(mapNotifierProvider.notifier).animateTo(pos);
-          ref.read(mapMarkersProvider.notifier).state = {
-            Marker(
-              markerId: const MarkerId('current_location'),
-              position: pos,
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueOrange,
-              ),
-              infoWindow: const InfoWindow(title: 'Your location'),
-            ),
-          };
         }
       });
     });
+
+    // Do not reveal a geographically false map or partially initialized home
+    // screen. Errors are allowed through so the customer can recover or choose
+    // a pickup manually instead of being trapped behind a loader.
+    if (locationState == null ||
+        locationState is LocationInitial ||
+        locationState is LocationLoading) {
+      return const _LocationStartupView();
+    }
 
     return Scaffold(
       key: _scaffoldKey,
@@ -102,6 +134,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 64,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            child: const LocationStatusBanner(),
+          ),
+
           // Layer 3 — draggable bottom sheet
           DraggableScrollableSheet(
             initialChildSize: 0.42,
@@ -121,6 +160,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: const MyLocationButton(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LocationStartupView extends StatelessWidget {
+  const _LocationStartupView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Image(
+                image: AssetImage('packages/theme/assets/images/logo.png'),
+                width: 88,
+                height: 88,
+              ),
+              SizedBox(height: AppSpacing.lg),
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(height: AppSpacing.md),
+              Text('Preparing your map…'),
+            ],
+          ),
+        ),
       ),
     );
   }
