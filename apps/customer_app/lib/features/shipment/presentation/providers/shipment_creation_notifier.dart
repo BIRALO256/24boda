@@ -1,155 +1,98 @@
-import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:core_models/core_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:utils/utils.dart';
 
-import 'package:customer_app/features/auth/presentation/providers/auth_notifier.dart';
-import 'package:customer_app/features/shipment/domain/usecases/create_shipment.dart';
-import 'package:customer_app/features/shipment/domain/usecases/watch_shipment.dart';
+import 'package:customer_app/features/shipment/data/repositories/delivery_quote_repository_impl.dart';
+import 'package:customer_app/features/shipment/domain/models/delivery_quote.dart';
+import 'package:customer_app/features/shipment/domain/repositories/delivery_quote_repository.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_state.dart';
 
-/// Manages the full shipment creation flow state.
-///
-/// Single notifier for all 4 screens — holds data as user progresses
-/// through: address → details → price → searching → accepted.
 class ShipmentCreationNotifier
     extends AutoDisposeNotifier<ShipmentCreationState> {
-  StreamSubscription<Shipment>? _shipmentSubscription;
+  String? _attemptFingerprint;
+  String? _idempotencyKey;
 
   @override
-  ShipmentCreationState build() {
-    // Cancel the stream subscription when this provider is disposed
-    ref.onDispose(() {
-      _shipmentSubscription?.cancel();
-    });
+  ShipmentCreationState build() => const ShipmentCreationIdle();
 
-    return const ShipmentCreationIdle();
+  void onAddressPicked({
+    required LocationSnapshot dropoff,
+    required LocationSnapshot pickup,
+  }) {
+    _clearAttempt();
+    state = ShipmentCreationAddressPicked(dropoff: dropoff, pickup: pickup);
   }
 
-  // ── Screen 1: Address picked ─────────────────────────────────────────────
-
-  void onAddressPicked({required Location dropoff, required Location pickup}) {
-    final distanceKm = DistanceFormatter.haversineKm(
-      pickup.lat,
-      pickup.lng,
-      dropoff.lat,
-      dropoff.lng,
-    );
-    final duration = DistanceFormatter.estimateDurationMinutes(distanceKm);
-
-    state = ShipmentCreationAddressPicked(
-      dropoff: dropoff,
-      pickup: pickup,
-      distanceKm: distanceKm,
-      estimatedDurationMinutes: duration,
-    );
-  }
-
-  // ── Screen 2: Package details entered ───────────────────────────────────
-
-  void onDetailsEntered({
+  Future<DeliveryQuoteFailure?> requestQuote({
     required PackageSize packageSize,
     String? packageDescription,
     String? customerNote,
-  }) {
-    final current = state;
-    if (current is! ShipmentCreationAddressPicked) return;
+  }) async {
+    final draft = switch (state) {
+      ShipmentCreationAddressPicked state => state,
+      ShipmentCreationQuoteFailed(:final draft) => draft,
+      _ => null,
+    };
+    if (draft == null) return null;
 
-    final priceEstimate = PricingCalculator.calculate(
-      distanceKm: current.distanceKm,
-      vehicleType: 'boda',
-      packageSize: packageSize,
-    );
+    final quoteSize = DeliveryQuotePackageSize.values.byName(packageSize.name);
+    final fingerprint = jsonEncode({
+      'pickup': draft.pickup.toMap(),
+      'dropoff': draft.dropoff.toMap(),
+      'packageSize': quoteSize.value,
+    });
+    if (_attemptFingerprint != fingerprint || _idempotencyKey == null) {
+      _attemptFingerprint = fingerprint;
+      _idempotencyKey = _newIdempotencyKey();
+    }
 
-    state = ShipmentCreationDetailsEntered(
-      dropoff: current.dropoff,
-      pickup: current.pickup,
-      distanceKm: current.distanceKm,
-      estimatedDurationMinutes: current.estimatedDurationMinutes,
-      packageSize: packageSize,
-      priceEstimate: priceEstimate,
-      packageDescription: packageDescription,
-      customerNote: customerNote,
-    );
-  }
-
-  // ── Screen 3: User confirms booking ─────────────────────────────────────
-
-  Future<void> confirmBooking() async {
-    final current = state;
-    if (current is! ShipmentCreationDetailsEntered) return;
-
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
-
-    state = const ShipmentCreationSubmitting();
-
+    state = ShipmentCreationQuoteLoading(draft: draft);
     try {
-      final shipment = await ref
-          .read(createShipmentProvider)
-          .call(
-            customerId: user.uid,
-            pickup: current.pickup,
-            dropoff: current.dropoff,
-            packageSize: current.packageSize.value,
-            distanceKm: current.distanceKm,
-            estimatedDurationMinutes: current.estimatedDurationMinutes,
-            estimatedFee: current.priceEstimate.estimatedFee,
-            packageDescription: current.packageDescription,
-            customerNote: current.customerNote,
+      final quote = await ref
+          .read(deliveryQuoteRepositoryProvider)
+          .createQuote(
+            CreateDeliveryQuoteRequest(
+              idempotencyKey: _idempotencyKey!,
+              pickup: draft.pickup,
+              dropoff: draft.dropoff,
+              packageSize: quoteSize,
+            ),
           );
-
-      state = ShipmentCreationSearching(shipment: shipment);
-
-      // Start listening for rider acceptance
-      _listenForRider(shipment.id);
-    } catch (e) {
-      state = ShipmentCreationError(
-        message: 'Could not create your delivery. Please try again.',
+      state = ShipmentCreationQuoteAvailable(
+        quote: quote,
+        packageSize: packageSize,
+        packageDescription: packageDescription,
+        customerNote: customerNote,
       );
+      return null;
+    } on DeliveryQuoteFailure catch (failure) {
+      state = ShipmentCreationQuoteFailed(draft: draft, failure: failure);
+      return failure;
     }
   }
 
-  // ── Real-time listener ───────────────────────────────────────────────────
-
-  void _listenForRider(String shipmentId) {
-    _shipmentSubscription?.cancel();
-    _shipmentSubscription = ref
-        .read(watchShipmentProvider)
-        .call(shipmentId)
-        .listen(
-          (shipment) {
-            if (shipment.status == ShipmentStatus.accepted ||
-                shipment.status.isActive) {
-              state = ShipmentCreationAccepted(shipment: shipment);
-              _shipmentSubscription?.cancel();
-            } else if (shipment.status == ShipmentStatus.cancelled) {
-              state = const ShipmentCreationError(
-                message: 'No riders found. Please try again.',
-              );
-            }
-          },
-          onError: (_) {
-            state = const ShipmentCreationError(
-              message: 'Connection lost. Please check your network.',
-            );
-          },
-        );
-  }
-
-  // ── Reset ────────────────────────────────────────────────────────────────
-
   void reset() {
-    _shipmentSubscription?.cancel();
+    _clearAttempt();
     state = const ShipmentCreationIdle();
   }
+
+  void _clearAttempt() {
+    _attemptFingerprint = null;
+    _idempotencyKey = null;
+  }
+}
+
+String _newIdempotencyKey() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(18, (_) => random.nextInt(256));
+  return base64UrlEncode(bytes).replaceAll('=', '');
 }
 
 final shipmentCreationProvider =
     AutoDisposeNotifierProvider<
       ShipmentCreationNotifier,
       ShipmentCreationState
-    >(() {
-      return ShipmentCreationNotifier();
-    });
+    >(ShipmentCreationNotifier.new);
