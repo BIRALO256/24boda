@@ -4,6 +4,7 @@ import 'package:core_models/core_models.dart';
 import 'package:theme/theme.dart';
 
 import 'package:customer_app/features/home/presentation/providers/location_provider.dart';
+import 'package:customer_app/features/home/presentation/providers/pickup_selection_provider.dart';
 import 'package:customer_app/features/shipment/domain/models/place_suggestion.dart';
 import 'package:customer_app/features/shipment/presentation/providers/address_search_provider.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
@@ -76,25 +77,20 @@ class _AddressSearchScreenState extends ConsumerState<AddressSearchScreen> {
 
     if (details == null || !mounted) return;
 
-    // Get current location for pickup
-    final locationState = ref.read(locationNotifierProvider).valueOrNull;
-    late Location pickup;
-
-    if (locationState is LocationLoaded) {
-      pickup = locationState.location;
-    } else {
-      // Fallback to Kampala centre if GPS not available
-      pickup = const Location(
-        lat: 0.3476,
-        lng: 32.5825,
-        address: 'Kampala, Uganda',
-      );
+    final pickup = ref.read(pickupSelectionProvider);
+    if (pickup == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Confirm your pickup location first.')),
+        );
+      }
+      return;
     }
 
-    final dropoff = Location(
-      lat: details.lat,
-      lng: details.lng,
+    final dropoff = LocationSnapshot(
       address: details.displayAddress,
+      coordinate: GeoCoordinate(latitude: details.lat, longitude: details.lng),
+      placeId: suggestion.placeId,
     );
 
     // Update shipment creation state with the chosen address

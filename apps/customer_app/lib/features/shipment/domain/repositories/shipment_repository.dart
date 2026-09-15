@@ -6,22 +6,6 @@ import 'package:core_models/core_models.dart';
 /// The presentation layer and use cases depend only on this interface —
 /// never on Firebase, Firestore, or any external service directly.
 abstract interface class ShipmentRepository {
-  /// Creates a new shipment document in Firestore.
-  ///
-  /// Returns the created [Shipment] with its Firestore-generated ID.
-  /// Status is set to [ShipmentStatus.searching] on creation.
-  Future<Shipment> createShipment({
-    required String customerId,
-    required Location pickup,
-    required Location dropoff,
-    required String packageSize,
-    required double distanceKm,
-    required int estimatedDurationMinutes,
-    required double estimatedFee,
-    String? packageDescription,
-    String? customerNote,
-  });
-
   /// Returns a real-time stream of a single shipment document.
   ///
   /// Emits a new [Shipment] every time the document changes in Firestore.

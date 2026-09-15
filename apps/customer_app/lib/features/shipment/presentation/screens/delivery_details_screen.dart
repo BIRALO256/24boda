@@ -59,12 +59,12 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
     super.dispose();
   }
 
-  void _onContinue() {
+  Future<void> _onContinue() async {
     if (_selectedSize == null) return;
 
-    ref
+    final failure = await ref
         .read(shipmentCreationProvider.notifier)
-        .onDetailsEntered(
+        .requestQuote(
           packageSize: _selectedSize!,
           packageDescription: _descriptionController.text.trim().isEmpty
               ? null
@@ -74,6 +74,13 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
               : _noteController.text.trim(),
         );
 
+    if (!mounted) return;
+    if (failure != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message)));
+      return;
+    }
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const PriceEstimateScreen()));
@@ -83,7 +90,11 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(shipmentCreationProvider);
 
-    if (state is! ShipmentCreationAddressPicked) {
+    final hasDraft =
+        state is ShipmentCreationAddressPicked ||
+        state is ShipmentCreationQuoteLoading ||
+        state is ShipmentCreationQuoteFailed;
+    if (!hasDraft) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted && state is ShipmentCreationIdle) {
           Navigator.of(context).popUntil((route) => route.isFirst);
@@ -255,7 +266,10 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
                     )
                   : BodaButton(
                       label: 'Get Price',
-                      onPressed: _onContinue,
+                      onPressed: state is ShipmentCreationQuoteLoading
+                          ? null
+                          : _onContinue,
+                      isLoading: state is ShipmentCreationQuoteLoading,
                       icon: Icons.arrow_forward_rounded,
                     ),
             ),

@@ -5,28 +5,15 @@ import 'package:utils/utils.dart';
 
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_notifier.dart';
 import 'package:customer_app/features/shipment/presentation/providers/shipment_creation_state.dart';
-import 'package:customer_app/features/shipment/presentation/screens/searching_rider_screen.dart';
 import 'package:customer_app/features/shipment/presentation/widgets/shipment_step_indicator.dart';
 
-/// Screen 3 — Price estimate and booking confirmation.
-///
-/// Shows the full breakdown before the user commits.
-/// No surprises at payment — transparency builds trust.
-///
-/// UX decisions:
-/// - Full price breakdown shown (base + distance + size + surge)
-/// - "Book Delivery" is the only primary action — one decision to make
-/// - Editing pickup/dropoff links back to previous screens
-/// - Surge pricing shown clearly when active — honesty over hiding it
 class PriceEstimateScreen extends ConsumerWidget {
   const PriceEstimateScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(shipmentCreationProvider);
-
-    // Guard — only render when details are entered
-    if (state is! ShipmentCreationDetailsEntered) {
+    if (state is! ShipmentCreationQuoteAvailable) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -34,31 +21,15 @@ class PriceEstimateScreen extends ConsumerWidget {
       );
     }
 
-    final isSubmitting =
-        ref.watch(shipmentCreationProvider) is ShipmentCreationSubmitting;
-
-    // Navigate to searching screen when shipment is created
-    ref.listen<ShipmentCreationState>(shipmentCreationProvider, (_, next) {
-      if (next is ShipmentCreationSearching) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => SearchingRiderScreen(shipmentId: next.shipment.id),
-          ),
-        );
-      }
-      if (next is ShipmentCreationError) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(next.message)));
-      }
-    });
-
-    final price = state.priceEstimate;
+    final quote = state.quote;
+    final price = quote.price;
+    final distanceKm = quote.routeDistanceMeters / 1000;
+    final durationMinutes = (quote.routeDurationSeconds / 60).ceil();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Price estimate', style: AppTypography.headlineMedium),
+        title: Text('Delivery price', style: AppTypography.headlineMedium),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.of(context).pop(),
@@ -73,31 +44,28 @@ class PriceEstimateScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Step indicator
                     const ShipmentStepIndicator(currentStep: 3),
-
                     const SizedBox(height: AppSpacing.xl),
-
-                    // ── Route summary card ───────────────────────────────
-                    _RouteCard(state: state),
-
+                    _RouteCard(
+                      pickupAddress: quote.pickup.address,
+                      dropoffAddress: quote.dropoff.address,
+                      distanceKm: distanceKm,
+                      durationMinutes: durationMinutes,
+                      packageLabel: state.packageSize.label,
+                    ),
                     const SizedBox(height: AppSpacing.md),
-
-                    // ── Price breakdown card ─────────────────────────────
-                    _PriceBreakdownCard(state: state),
-
-                    if (price.isSurge) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      _SurgeBanner(),
-                    ],
-
-                    const SizedBox(height: AppSpacing.xl),
+                    _PriceCard(
+                      subtotalUgx: price.subtotalUgx,
+                      discountUgx: price.discountUgx,
+                      taxUgx: price.taxUgx,
+                      totalUgx: price.customerTotalUgx,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _QuoteValidityCard(expiresAt: quote.expiresAt),
                   ],
                 ),
               ),
             ),
-
-            // ── Sticky Book button ───────────────────────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
@@ -112,27 +80,23 @@ class PriceEstimateScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Total price prominent display
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total', style: AppTypography.titleLarge),
                       Text(
-                        CurrencyFormatter.format(price.estimatedFee),
+                        CurrencyFormatter.format(
+                          price.customerTotalUgx.toDouble(),
+                        ),
                         style: AppTypography.price,
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  BodaButton(
-                    label: 'Book Delivery',
-                    onPressed: isSubmitting
-                        ? null
-                        : () => ref
-                              .read(shipmentCreationProvider.notifier)
-                              .confirmBooking(),
-                    isLoading: isSubmitting,
-                    icon: Icons.local_shipping_rounded,
+                  const BodaButton(
+                    label: 'Delivery confirmation coming next',
+                    onPressed: null,
+                    icon: Icons.lock_clock_rounded,
                   ),
                 ],
               ),
@@ -144,224 +108,186 @@ class PriceEstimateScreen extends ConsumerWidget {
   }
 }
 
-// ── Sub-widgets ────────────────────────────────────────────────────────────
-
 class _RouteCard extends StatelessWidget {
-  const _RouteCard({required this.state});
-  final ShipmentCreationDetailsEntered state;
+  const _RouteCard({
+    required this.pickupAddress,
+    required this.dropoffAddress,
+    required this.distanceKm,
+    required this.durationMinutes,
+    required this.packageLabel,
+  });
+
+  final String pickupAddress;
+  final String dropoffAddress;
+  final double distanceKm;
+  final int durationMinutes;
+  final String packageLabel;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppSpacing.cardRadius,
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Column(
-        children: [
-          _RouteRow(
-            icon: Icons.my_location_rounded,
-            iconColor: AppColors.primary,
-            label: 'From',
-            address: state.pickup.address,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.smMd),
-            child: Container(height: 20, width: 1.5, color: AppColors.divider),
-          ),
-          _RouteRow(
-            icon: Icons.location_on_rounded,
-            iconColor: AppColors.dark,
-            label: 'To',
-            address: state.dropoff.address,
-          ),
-          const Divider(height: AppSpacing.lg),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _InfoChip(
-                icon: Icons.straighten_rounded,
-                label: DistanceFormatter.format(state.distanceKm),
-              ),
-              _InfoChip(
-                icon: Icons.timer_outlined,
-                label: DistanceFormatter.formatDuration(
-                  state.estimatedDurationMinutes,
-                ),
-              ),
-              _InfoChip(
-                icon: Icons.inventory_2_outlined,
-                label: state.packageSize.label,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: AppSpacing.cardRadius,
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Column(
+      children: [
+        _RouteRow(label: 'From', address: pickupAddress, isPickup: true),
+        const Divider(height: AppSpacing.lg),
+        _RouteRow(label: 'To', address: dropoffAddress, isPickup: false),
+        const Divider(height: AppSpacing.lg),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _InfoChip(label: DistanceFormatter.format(distanceKm)),
+            _InfoChip(label: DistanceFormatter.formatDuration(durationMinutes)),
+            _InfoChip(label: packageLabel),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 class _RouteRow extends StatelessWidget {
   const _RouteRow({
-    required this.icon,
-    required this.iconColor,
     required this.label,
     required this.address,
+    required this.isPickup,
   });
 
-  final IconData icon;
-  final Color iconColor;
   final String label;
   final String address;
+  final bool isPickup;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: iconColor, size: AppSpacing.iconMd),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: AppTypography.labelSmall),
-              Text(
-                address,
-                style: AppTypography.titleSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(
+        isPickup ? Icons.my_location_rounded : Icons.location_on_rounded,
+        color: isPickup ? AppColors.primary : AppColors.dark,
+      ),
+      const SizedBox(width: AppSpacing.sm),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: AppTypography.labelSmall),
+            Text(
+              address,
+              style: AppTypography.titleSmall,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.icon, required this.label});
-  final IconData icon;
+  const _InfoChip({required this.label});
   final String label;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: AppSpacing.iconMd, color: AppColors.textSecondary),
-        const SizedBox(width: AppSpacing.xs),
-        Text(label, style: AppTypography.bodyMedium),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Text(
+    label,
+    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+  );
 }
 
-class _PriceBreakdownCard extends StatelessWidget {
-  const _PriceBreakdownCard({required this.state});
-  final ShipmentCreationDetailsEntered state;
+class _PriceCard extends StatelessWidget {
+  const _PriceCard({
+    required this.subtotalUgx,
+    required this.discountUgx,
+    required this.taxUgx,
+    required this.totalUgx,
+  });
+
+  final int subtotalUgx;
+  final int discountUgx;
+  final int taxUgx;
+  final int totalUgx;
 
   @override
-  Widget build(BuildContext context) {
-    final p = state.priceEstimate;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: AppSpacing.cardRadius,
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Price breakdown', style: AppTypography.titleLarge),
-          const SizedBox(height: AppSpacing.md),
-          _PriceRow(label: 'Base rate', amount: p.baseRate),
-          _PriceRow(
-            label: 'Distance (${DistanceFormatter.format(state.distanceKm)})',
-            amount: p.distanceCharge,
-          ),
-          if (p.sizeSurcharge > 0)
-            _PriceRow(
-              label: '${state.packageSize.label} surcharge',
-              amount: p.sizeSurcharge,
-            ),
-          if (p.isSurge)
-            _PriceRow(
-              label:
-                  'Peak hour surge (${((p.surgeMultiplier - 1) * 100).round()}%)',
-              amount: p.estimatedFee - (p.estimatedFee / p.surgeMultiplier),
-              isHighlight: true,
-            ),
-          const Divider(height: AppSpacing.lg),
-          _PriceRow(
-            label: 'Estimated total',
-            amount: p.estimatedFee,
-            isBold: true,
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: BoxDecoration(
+      color: AppColors.background,
+      borderRadius: AppSpacing.cardRadius,
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Column(
+      children: [
+        _PriceRow(label: 'Delivery price', amountUgx: subtotalUgx),
+        if (discountUgx > 0)
+          _PriceRow(label: 'Discount', amountUgx: -discountUgx),
+        if (taxUgx > 0) _PriceRow(label: 'Tax', amountUgx: taxUgx),
+        const Divider(height: AppSpacing.lg),
+        _PriceRow(label: 'Total', amountUgx: totalUgx, emphasized: true),
+      ],
+    ),
+  );
 }
 
 class _PriceRow extends StatelessWidget {
   const _PriceRow({
     required this.label,
-    required this.amount,
-    this.isBold = false,
-    this.isHighlight = false,
+    required this.amountUgx,
+    this.emphasized = false,
   });
 
   final String label;
-  final double amount;
-  final bool isBold;
-  final bool isHighlight;
+  final int amountUgx;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
-    final style = isBold
+    final style = emphasized
         ? AppTypography.titleLarge
-        : AppTypography.bodyMedium.copyWith(
-            color: isHighlight ? AppColors.warning : null,
-          );
+        : AppTypography.bodyMedium;
+    final prefix = amountUgx < 0 ? '- ' : '';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: style),
-          Text(CurrencyFormatter.formatCompact(amount), style: style),
+          Text(
+            '$prefix${CurrencyFormatter.format(amountUgx.abs().toDouble())}',
+            style: style,
+          ),
         ],
       ),
     );
   }
 }
 
-class _SurgeBanner extends StatelessWidget {
+class _QuoteValidityCard extends StatelessWidget {
+  const _QuoteValidityCard({required this.expiresAt});
+  final DateTime expiresAt;
+
   @override
   Widget build(BuildContext context) {
+    final expiryTime = TimeOfDay.fromDateTime(
+      expiresAt.toLocal(),
+    ).format(context);
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.warningSurface,
+        color: AppColors.primarySurface,
         borderRadius: AppSpacing.cardRadius,
-        border: Border.all(color: AppColors.warning),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.bolt_rounded,
-            color: AppColors.warning,
-            size: AppSpacing.iconMd,
-          ),
+          const Icon(Icons.schedule_rounded, color: AppColors.primary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Peak hour pricing is active. Prices return to normal after 9 AM and 8 PM.',
+              'This fixed price is reserved until $expiryTime.',
               style: AppTypography.labelSmall.copyWith(color: AppColors.dark),
             ),
           ),

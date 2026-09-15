@@ -54,8 +54,12 @@ class DeliveryBottomSheet extends ConsumerWidget {
     String? selectedDropoff;
     if (shipmentState is ShipmentCreationAddressPicked) {
       selectedDropoff = shipmentState.dropoff.address;
-    } else if (shipmentState is ShipmentCreationDetailsEntered) {
-      selectedDropoff = shipmentState.dropoff.address;
+    } else if (shipmentState is ShipmentCreationQuoteAvailable) {
+      selectedDropoff = shipmentState.quote.dropoff.address;
+    } else if (shipmentState is ShipmentCreationQuoteLoading) {
+      selectedDropoff = shipmentState.draft.dropoff.address;
+    } else if (shipmentState is ShipmentCreationQuoteFailed) {
+      selectedDropoff = shipmentState.draft.dropoff.address;
     }
 
     return Container(
